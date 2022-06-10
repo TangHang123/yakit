@@ -319,7 +319,7 @@ export const PluginResultUI: React.FC<PluginResultUIProp> = React.memo((props) =
                         customKeyEventHandler={(e) => {
                             if (e.keyCode === 67 && (e.ctrlKey || e.metaKey)) {
                                 const str = xtermRef?.current ? (xtermRef.current as any).terminal.getSelection() : ""
-        
+
                                 if (timer.current) {
                                     clearTimeout(timer.current)
                                     timer.current = null
