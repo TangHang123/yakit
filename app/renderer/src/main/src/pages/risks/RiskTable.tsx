@@ -1,11 +1,11 @@
 import React, {useEffect, useRef, useState} from "react"
-import {Button, Space, Table, Tag, Form, Typography, Descriptions, Popconfirm} from "antd"
+import {Button, Space, Table, Tag, Form, Typography, Descriptions, Popconfirm, Tooltip, Menu} from "antd"
 import {Risk} from "./schema"
 import {genDefaultPagination, QueryGeneralRequest, QueryGeneralResponse} from "../invoker/schema"
 import {useGetState, useMemoizedFn} from "ahooks"
 import {formatTimestamp} from "../../utils/timeUtil"
 import {ReloadOutlined, SearchOutlined} from "@ant-design/icons"
-import {failed} from "../../utils/notification"
+import {failed, success} from "../../utils/notification"
 import {showModal} from "../../utils/showModal"
 import {InputItem, ManyMultiSelectForString} from "../../utils/inputUtil"
 
@@ -17,6 +17,11 @@ import lowImg from "../../assets/riskDetails/low.png"
 import debugImg from "../../assets/riskDetails/debug.png"
 
 import "./RiskTable.css"
+import {ExportExcel} from "../../components/DataExport/index"
+import {HTTPPacketEditor} from "../../utils/editors"
+import {onRemoveToolFC} from "../../utils/deleteTool"
+import {showByContextMenu} from "../../components/functionTemplate/showByContext"
+import {ColumnType} from "antd/lib/table"
 
 export interface RiskTableProp {
     severity?: string
@@ -50,9 +55,9 @@ export interface FieldNameSelectItem {
 }
 
 const mergeFieldNames = (f: Fields) => {
-    let m = new Map<string, FieldNameSelectItem>();
-    (f.Values || []).forEach(v => {
-        let i = m.get(v.Verbose);
+    let m = new Map<string, FieldNameSelectItem>()
+    ;(f.Values || []).forEach((v) => {
+        let i = m.get(v.Verbose)
         if (!i) {
             m.set(v.Verbose, {Total: v.Total, Verbose: v.Verbose, Names: [v.Name]})
             return
@@ -63,14 +68,20 @@ const mergeFieldNames = (f: Fields) => {
         }
     })
     let items: FieldNameSelectItem[] = []
-    m.forEach(value => {
+    m.forEach((value) => {
         items.push(value)
     })
     return items
 }
 
 export const TitleColor = [
-    {key: ["trace", "debug", "note"], value: "title-debug", name: "调试信息", img: debugImg, tag: "title-background-debug"},
+    {
+        key: ["trace", "debug", "note"],
+        value: "title-debug",
+        name: "调试信息",
+        img: debugImg,
+        tag: "title-background-debug"
+    },
     {
         key: ["info", "fingerprint", "infof", "default"],
         value: "title-info",
@@ -93,8 +104,27 @@ export const TitleColor = [
         name: "严重",
         img: fatalImg,
         tag: "title-background-fatal"
-    },
+    }
 ]
+
+const formatJson = (filterVal, jsonData) => {
+    return jsonData.map((v, index) =>
+        filterVal.map((j) => {
+            if (j === "CreatedAt") {
+                return formatTimestamp(v[j])
+            } else if (j === "Severity") {
+                const title = TitleColor.filter((item) => item.key.includes(v[j] || ""))[0]
+                return title ? title.name : v[j] || "-"
+            } else if (j === "RiskTypeVerbose") {
+                return v[j] || v["RiskType"]
+            } else if (j === "TitleVerbose") {
+                return v[j] || v["Title"]
+            } else {
+                return v[j]
+            }
+        })
+    )
+}
 
 export const RiskTable: React.FC<RiskTableProp> = (props) => {
     const [response, setResponse] = useState<QueryGeneralResponse<Risk>>({
@@ -103,40 +133,46 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
         Total: 0
     })
     const [params, setParams, getParams] = useGetState<QueryRisksParams>({
-            Severity: props.severity,
-            Pagination: genDefaultPagination(20)
-        }
-    )
+        Severity: props.severity,
+        Pagination: genDefaultPagination(20)
+    })
     const total = response.Total
     const pagination = response.Pagination
     const page = response.Pagination.Page
     const limit = response.Pagination.Limit
     const [loading, setLoading] = useState(false)
-    const [types, setTypes] = useState<FieldNameSelectItem[]>([]);
-    const [severities, setSeverities] = useState<FieldNameSelectItem[]>([]);
+    const [types, setTypes] = useState<FieldNameSelectItem[]>([])
+    const [severities, setSeverities] = useState<FieldNameSelectItem[]>([])
+    const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
+
+    const [selected, setSelected, getSelected] = useGetState<Risk>()
 
     const time = useRef<any>(null)
 
     const updateRiskAndLevel = useMemoizedFn(() => {
         ipcRenderer.invoke("QueryAvailableRiskType", {}).then((f: Fields) => {
-            setTypes(mergeFieldNames(f).sort((a, b) => {
-                const diff = a.Total - b.Total
-                if (diff === 0) {
-                    return a.Verbose.localeCompare(b.Verbose)
-                } else {
-                    return diff
-                }
-            }))
+            setTypes(
+                mergeFieldNames(f).sort((a, b) => {
+                    const diff = a.Total - b.Total
+                    if (diff === 0) {
+                        return a.Verbose.localeCompare(b.Verbose)
+                    } else {
+                        return diff
+                    }
+                })
+            )
         })
         ipcRenderer.invoke("QueryAvailableRiskLevel", {}).then((i: Fields) => {
-            setSeverities(mergeFieldNames(i).sort((a, b) => {
-                const diff = a.Total - b.Total
-                if (diff === 0) {
-                    return a.Verbose.localeCompare(b.Verbose)
-                } else {
-                    return diff
-                }
-            }))
+            setSeverities(
+                mergeFieldNames(i).sort((a, b) => {
+                    const diff = a.Total - b.Total
+                    if (diff === 0) {
+                        return a.Verbose.localeCompare(b.Verbose)
+                    } else {
+                        return diff
+                    }
+                })
+            )
         })
     })
 
@@ -149,13 +185,14 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
             setLoading(true)
             ipcRenderer
                 .invoke("QueryRisks", {
-                    ...params,
+                    ...getParams(),
                     ...(extraParam ? extraParam : {}),
                     Pagination: paginationProps
                 })
                 .then((r: QueryGeneralResponse<any>) => {
                     setResponse(r)
                     updateRiskAndLevel()
+                    setSelectedRowKeys([])
                 })
                 .catch((e) => {
                     failed(`QueryRisks failed: ${e}`)
@@ -198,7 +235,7 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
         }
         time.current = setTimeout(() => {
             update(1)
-        }, 1000);
+        }, 1000)
     })
     const isSelected = useMemoizedFn((type: string, value: string) => {
         const relation = {type: "RiskType", severity: "Severity"}
@@ -212,235 +249,305 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
     }, [])
 
     const showSelectedTag = () => {
-        const risktypes = getParams().RiskType ? getParams().RiskType?.split("|") : []
-        const severitys = getParams().Severity ? getParams().Severity?.split("|") : []
+        const risktypes: string[] = (getParams().RiskType && getParams().RiskType?.split("|")) || []
+        const severitys: string[] = (getParams().Severity && getParams().Severity?.split("|")) || []
 
-        const typekind = types.map((item) => {
+        const typekind = types.filter((item) => {
             item.Names = item.Names || []
-            return item
+            const type = risktypes.find((t) => {
+                return item.Names.includes(t) && t
+            })
+            return !!type
         })
-        const severitykind = severities.map((item) => {
+        const severitykind = severities.filter((item) => {
             item.Names = item.Names || []
-            return item
+            const severity = severitys.find((t) => {
+                return item.Names.includes(t) && t
+            })
+            return !!severity
         })
-
         return (
-            <>
-                {risktypes?.map((type) => (
-                    <div className="title-selected-tag" key={type}>
-                        <div className="tag-name-style" key={type}>{
-                            (() => {
-                                const result = typekind.filter((item) => {
-                                    return item.Names.join(",").startsWith(type)
-                                })
-                                if (result.length > 0) {
-                                    return result[0] && result[0].Verbose
-                                }
-                                return ""
-                            })()
-                        }</div>
-                        <div className="tag-del-style" onClick={() => filterSelect("type", type)}>x</div>
-                    </div>
-                ))}
-                {severitys?.map((severity) => (
-                    <div className="title-selected-tag" key={severity}>
-                        <div className="tag-name-style"
-                             key={severity}>
-                            {
-                                (() => {
-                                    const result = severitykind.filter((item) => {
-                                        return item.Names.join(",").startsWith(severity)
-                                    })
-                                    if (result.length > 0) {
-                                        return result[0] && result[0].Verbose
-                                    }
-                                    return severity
-                                })()
-                            }
-                            {/*{severitykind.filter((item) => item.Names.join(",").startsWith(severity))[0].Verbose}*/}
-                        </div>
-                        <div className="tag-del-style" onClick={() => filterSelect("severity", severity)}>x</div>
-                    </div>
-                ))}
-            </>
+            (typekind.length > 0 || severitykind.length > 0) && (
+                <div className='title-header'>
+                    {typekind.map((ele) => {
+                        const type =
+                            risktypes.find((t) => {
+                                ele.Names.includes(t)
+                            }) || ""
+                        return (
+                            <div className='title-selected-tag' key={type}>
+                                <div className='tag-name-style' key={type}>
+                                    {ele.Verbose}
+                                </div>
+                                <div
+                                    className='tag-del-style'
+                                    onClick={() => filterSelect("type", ele.Names.join(","))}
+                                >
+                                    x
+                                </div>
+                            </div>
+                        )
+                    })}
+                    {severitykind?.map((ele) => {
+                        const severity =
+                            severitys.find((t) => {
+                                ele.Names.includes(t)
+                            }) || ""
+                        return (
+                            <div className='title-selected-tag' key={severity}>
+                                <div className='tag-name-style' key={severity}>
+                                    {ele.Verbose}
+                                </div>
+                                <div
+                                    className='tag-del-style'
+                                    onClick={() => filterSelect("severity", ele.Names.join(","))}
+                                >
+                                    x
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )
         )
     }
 
+    const columns = [
+        {
+            title: "标题",
+            dataIndex: "TitleVerbose",
+            render: (_, i: Risk) => (
+                <Paragraph style={{maxWidth: 400, marginBottom: 0}} ellipsis={{tooltip: true}}>
+                    {i?.TitleVerbose || i.Title}
+                </Paragraph>
+            ),
+            width: 400,
+            filteredValue: (getParams()["Search"] && ["TitleVerbose"]) || null,
+            filterIcon: (filtered) => {
+                return params && <SearchOutlined style={{color: filtered ? "#1890ff" : undefined}} />
+            },
+            filterDropdown: ({setSelectedKeys, selectedKeys, confirm}) => {
+                return (
+                    params &&
+                    setParams && (
+                        <TableFilterDropdownString
+                            label={"搜索关键字"}
+                            params={params}
+                            setParams={setParams}
+                            filterName={"Search"}
+                            confirm={confirm}
+                            setSelectedKeys={setSelectedKeys}
+                            update={update}
+                        />
+                    )
+                )
+            }
+        },
+        {
+            title: "类型",
+            dataIndex: "RiskTypeVerbose",
+            width: 90,
+            filteredValue: (getParams()["RiskType"] && ["RiskTypeVerbose"]) || null,
+            render: (_, i: Risk) => i?.RiskTypeVerbose || i.RiskType,
+            filterIcon: (filtered) => {
+                return params && <SearchOutlined style={{color: filtered ? "#1890ff" : undefined}} />
+            },
+            filterDropdown: ({setSelectedKeys, selectedKeys, confirm}) => {
+                return (
+                    params &&
+                    setParams && (
+                        <TableFilterDropdownString
+                            label={"搜索类型关键字"}
+                            params={params}
+                            setParams={setParams}
+                            filterName={"RiskType"}
+                            confirm={confirm}
+                            setSelectedKeys={setSelectedKeys}
+                            update={update}
+                        />
+                    )
+                )
+            }
+        },
+        {
+            title: "等级",
+            dataIndex: "Severity",
+            render: (_, i: Risk) => {
+                const title = TitleColor.filter((item) => item.key.includes(i.Severity || ""))[0]
+                return <span className={title?.value || "title-default"}>{title ? title.name : i.Severity || "-"}</span>
+            },
+            width: 90
+        },
+        {
+            title: "IP",
+            dataIndex: "IP",
+            render: (_, i: Risk) => i?.IP || "-",
+            filteredValue: (getParams()["Network"] && ["IP"]) || null,
+            filterIcon: (filtered) => {
+                return params && <SearchOutlined style={{color: filtered ? "#1890ff" : undefined}} />
+            },
+            filterDropdown: ({setSelectedKeys, selectedKeys, confirm}) => {
+                return (
+                    params &&
+                    setParams && (
+                        <TableFilterDropdownString
+                            label={"搜索网段"}
+                            params={params}
+                            setParams={setParams}
+                            filterName={"Network"}
+                            confirm={confirm}
+                            setSelectedKeys={setSelectedKeys}
+                            update={update}
+                        />
+                    )
+                )
+            }
+        },
+        {title: "Token", dataIndex: "ReverseToken", render: (_, i: Risk) => i?.ReverseToken || "-"},
+        {
+            title: "发现时间",
+            dataIndex: "CreatedAt",
+            render: (_, i: Risk) => <Tag>{i.CreatedAt > 0 ? formatTimestamp(i.CreatedAt) : "-"}</Tag>
+        },
+        {
+            title: "操作",
+            dataIndex: "Action",
+            render: (_, i: Risk) => {
+                return (
+                    <Space>
+                        <Button
+                            size='small'
+                            type={"link"}
+                            onClick={() => {
+                                showModal({
+                                    width: "80%",
+                                    title: "详情",
+                                    content: (
+                                        <div style={{overflow: "auto"}}>
+                                            <RiskDetails info={i} />
+                                        </div>
+                                    )
+                                })
+                            }}
+                        >
+                            详情
+                        </Button>
+                        <Button size='small' type={"link"} danger onClick={() => delRisk(i.Hash)}>
+                            删除
+                        </Button>
+                    </Space>
+                )
+            }
+        }
+    ]
+
+    const getData = useMemoizedFn((query) => {
+        return new Promise((resolve) => {
+            ipcRenderer
+                .invoke("QueryRisks", {
+                    ...params,
+                    Pagination: {
+                        ...query
+                    }
+                })
+                .then((res: QueryGeneralResponse<any>) => {
+                    const {Data} = res
+                    //    数据导出
+                    let exportData: any = []
+                    const header: string[] = []
+                    const filterVal: string[] = []
+                    columns.forEach((item) => {
+                        if (item.dataIndex !== "Action") {
+                            header.push(item.title)
+                            filterVal.push(item.dataIndex)
+                        }
+                    })
+                    exportData = formatJson(filterVal, Data)
+                    resolve({
+                        header,
+                        exportData,
+                        response: res
+                    })
+                })
+                .catch((e) => {
+                    failed("数据导出失败 " + `${e}`)
+                })
+        })
+    })
+
+    const onRemove = useMemoizedFn(() => {
+        const transferParams = {
+            selectedRowKeys,
+            params,
+            interfaceName: "DeleteRisk"
+        }
+        setLoading(true)
+        onRemoveToolFC(transferParams)
+            .then(() => {
+                refList()
+            })
+            .finally(() => setTimeout(() => setLoading(false), 300))
+    })
+
+    const refList = useMemoizedFn(() => {
+        setParams({
+            Severity: props.severity,
+            Pagination: genDefaultPagination(20)
+        })
+        setTimeout(() => {
+            update()
+        }, 10)
+    })
     return (
         <div className='risk-table-container'>
-            <div className="container-table">
+            <div className='container-table'>
                 <Table<Risk>
                     title={() => {
                         return (
                             <div>
-                                <div className="table-title">
+                                <div className='table-title'>
                                     <Space>
-                                        {"风险与漏洞"}
-                                        <Button
-                                            size={"small"}
-                                            type={"link"}
-                                            onClick={() => {
-                                                update()
-                                            }}
-                                            icon={<ReloadOutlined/>}
-                                        />
+                                        风险与漏洞
+                                        <Tooltip title='刷新会重置所有查询条件'>
+                                            <Button
+                                                size={"small"}
+                                                type={"link"}
+                                                onClick={() => {
+                                                    refList()
+                                                }}
+                                                icon={<ReloadOutlined />}
+                                            />
+                                        </Tooltip>
                                     </Space>
                                     <Space>
-                                        <Button
-                                            danger={true}
-                                            size={"small"}
-                                            type={"primary"}
-                                            onClick={() => {
-                                                let m = showModal({
-                                                    title: "删除数据选项",
-                                                    width: "50%",
-                                                    content: (
-                                                        <div>
-                                                            <DeleteRiskForm
-                                                                types={types}
-                                                                severities={severities}
-                                                                onClose={() => {
-                                                                    m.destroy()
-                                                                    update(1)
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    )
-                                                })
-                                            }}
+                                        <ExportExcel
+                                            getData={getData}
+                                            btnProps={{size: "small"}}
+                                            fileName='风险与漏洞'
+                                        />
+                                        <Popconfirm
+                                            title={
+                                                selectedRowKeys.length > 0
+                                                    ? "确定删除选择的风险与漏洞吗？不可恢复"
+                                                    : "确定删除所有风险与漏洞吗? 不可恢复"
+                                            }
+                                            onConfirm={onRemove}
                                         >
-                                            删除数据
-                                        </Button>
+                                            <Button size='small' danger={true}>
+                                                删除数据
+                                            </Button>
+                                        </Popconfirm>
                                     </Space>
                                 </div>
-                                {(!!getParams().Severity || !!getParams().RiskType) &&
-                                <div className="title-header">{showSelectedTag()}</div>}
+                                {showSelectedTag()}
                             </div>
                         )
                     }}
                     size={"small"}
                     bordered={true}
-                    columns={[
-                        {
-                            title: "标题",
-                            render: (i: Risk) => (
-                                <Paragraph style={{maxWidth: 400, marginBottom: 0}} ellipsis={{tooltip: true}}>
-                                    {i?.TitleVerbose || i.Title}
-                                </Paragraph>
-                            ),
-                            width: 400,
-                            filterIcon: (filtered) => {
-                                return params && <SearchOutlined style={{color: filtered ? "#1890ff" : undefined}}/>
-                            },
-                            filterDropdown: ({setSelectedKeys, selectedKeys, confirm}) => {
-                                return (
-                                    params &&
-                                    setParams && (
-                                        <TableFilterDropdownString
-                                            label={"搜索关键字"}
-                                            params={params}
-                                            setParams={setParams}
-                                            filterName={"Search"}
-                                            confirm={confirm}
-                                            setSelectedKeys={setSelectedKeys}
-                                            update={update}
-                                        />
-                                    )
-                                )
-                            }
-                        },
-                        {
-                            title: "类型",
-                            render: (i: Risk) => i?.RiskTypeVerbose || i.RiskType,
-                            filterIcon: (filtered) => {
-                                return params && <SearchOutlined style={{color: filtered ? "#1890ff" : undefined}}/>
-                            },
-                            filterDropdown: ({setSelectedKeys, selectedKeys, confirm}) => {
-                                return (
-                                    params &&
-                                    setParams && (
-                                        <TableFilterDropdownString
-                                            label={"搜索类型关键字"}
-                                            params={params}
-                                            setParams={setParams}
-                                            filterName={"RiskType"}
-                                            confirm={confirm}
-                                            setSelectedKeys={setSelectedKeys}
-                                            update={update}
-                                        />
-                                    )
-                                )
-                            }
-                        },
-                        {
-                            title: "等级",
-                            render: (i: Risk) => {
-                                const title = TitleColor.filter((item) => item.key.includes(i.Severity || ""))[0]
-                                return (
-                                    <span className={title?.value || "title-default"}>
-                                        {title ? title.name : i.Severity || "-"}
-                                    </span>
-                                )
-                            },
-                            width: 90
-                        },
-                        {
-                            title: "IP",
-                            render: (i: Risk) => i?.IP || "-",
-                            filterIcon: (filtered) => {
-                                return params && <SearchOutlined style={{color: filtered ? "#1890ff" : undefined}}/>
-                            },
-                            filterDropdown: ({setSelectedKeys, selectedKeys, confirm}) => {
-                                return (
-                                    params &&
-                                    setParams && (
-                                        <TableFilterDropdownString
-                                            label={"搜索网段"}
-                                            params={params}
-                                            setParams={setParams}
-                                            filterName={"Network"}
-                                            confirm={confirm}
-                                            setSelectedKeys={setSelectedKeys}
-                                            update={update}
-                                        />
-                                    )
-                                )
-                            }
-                        },
-                        {title: "Token", render: (i: Risk) => i?.ReverseToken || "-"},
-                        {
-                            title: "发现时间",
-                            render: (i: Risk) => <Tag>{i.CreatedAt > 0 ? formatTimestamp(i.CreatedAt) : "-"}</Tag>
-                        },
-                        {
-                            title: "操作",
-                            render: (i: Risk) => (
-                                <Space>
-                                    <Button
-                                        size='small'
-                                        type={"link"}
-                                        onClick={() => {
-                                            showModal({
-                                                width: "80%",
-                                                title: "详情",
-                                                content: (
-                                                    <div style={{overflow: "auto"}}>
-                                                        <RiskDetails info={i}/>
-                                                    </div>
-                                                )
-                                            })
-                                        }}
-                                    >
-                                        详情
-                                    </Button>
-                                    <Button size='small' type={"link"} danger onClick={() => delRisk(i.Hash)}>
-                                        删除
-                                    </Button>
-                                </Space>
-                            )
-                        }
-                    ]}
-                    rowKey={(e) => e.Hash}
+                    columns={columns}
+                    scroll={{x: "auto"}}
+                    rowKey={(e) => e.Id}
                     loading={loading}
                     dataSource={response.Data}
                     pagination={{
@@ -463,51 +570,89 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
                                 return
                         }
                     }}
+                    rowSelection={{
+                        onChange: (selectedRowKeys) => {
+                            setSelectedRowKeys(selectedRowKeys as string[])
+                        },
+                        selectedRowKeys
+                    }}
+                    onRow={(record) => {
+                        return {
+                            onContextMenu: (event) => {
+                                showByContextMenu({
+                                    data: [{key: "delect-repeat", title: "删除重复标题数据"}],
+                                    onClick: ({key}) => {
+                                        if (key === "delect-repeat") {
+                                            const newParams = {
+                                                DeleteRepetition: true,
+                                                Id: record.Id,
+                                                Filter: {
+                                                    Search: record?.TitleVerbose || record.Title
+                                                }
+                                            }
+                                            ipcRenderer
+                                                .invoke("DeleteRisk", newParams)
+                                                .then(() => {
+                                                    update()
+                                                })
+                                                .catch((e: any) => {
+                                                    failed(`DeleteRisk failed: ${e}`)
+                                                })
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                    }}
                 />
             </div>
 
             <div className='container-filter-body'>
-                {severities.length > 0 && <div className='filter-body-opt'>
-                    <div className='opt-header'>漏洞级别</div>
-                    <div className='opt-list'>
-                        {severities.map((item) => {
-                            const value = (item.Names || []).join(",")
-                            return (
-                                <div
-                                    key={value}
-                                    className={`opt-list-item ${isSelected("severity", value) ? "selected" : ""}`}
-                                    onClick={() => filterSelect("severity", value)}
-                                >
-                                    <span className='item-name' title={item.Verbose}>
-                                        {item.Verbose}
-                                    </span>
-                                    <span>{item.Total}</span>
-                                </div>
-                            )
-                        })}
+                {severities.length > 0 && (
+                    <div className='filter-body-opt'>
+                        <div className='opt-header'>漏洞级别</div>
+                        <div className='opt-list'>
+                            {severities.map((item) => {
+                                const value = (item.Names || []).join(",")
+                                return (
+                                    <div
+                                        key={value}
+                                        className={`opt-list-item ${isSelected("severity", value) ? "selected" : ""}`}
+                                        onClick={() => filterSelect("severity", value)}
+                                    >
+                                        <span className='item-name' title={item.Verbose}>
+                                            {item.Verbose}
+                                        </span>
+                                        <span>{item.Total}</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
-                </div>}
+                )}
 
-                <div className="opt-separator"></div>
+                <div className='opt-separator'></div>
 
-                {types.length > 0 && <div className='filter-body-opt'>
-                    <div className='opt-header'>漏洞/风险类型</div>
-                    <div className='opt-list'>
-                        {types.map((item) => {
-                            const value = (item.Names || []).join(",")
-                            return (
-                                <div
-                                    key={value}
-                                    className={`opt-list-item ${isSelected("type", value) ? "selected" : ""}`}
-                                    onClick={() => filterSelect("type", value)}
-                                >
-                                    <span>{item.Verbose}</span>
-                                    <span>{item.Total}</span>
-                                </div>
-                            )
-                        })}
+                {types.length > 0 && (
+                    <div className='filter-body-opt'>
+                        <div className='opt-header'>漏洞/风险类型</div>
+                        <div className='opt-list'>
+                            {types.map((item) => {
+                                const value = (item.Names || []).join(",")
+                                return (
+                                    <div
+                                        key={value}
+                                        className={`opt-list-item ${isSelected("type", value) ? "selected" : ""}`}
+                                        onClick={() => filterSelect("type", value)}
+                                    >
+                                        <span>{item.Verbose}</span>
+                                        <span>{item.Total}</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
-                </div>}
+                )}
             </div>
         </div>
     )
@@ -600,65 +745,13 @@ export interface DeleteRiskFormProp {
     types?: FieldNameSelectItem[]
     severities?: FieldNameSelectItem[]
 }
-
-export const DeleteRiskForm: React.FC<DeleteRiskFormProp> = (props) => {
-    const {types, severities} = props;
-    const [params, setParams] = useState<QueryRisksParams>({
-        Network: "",
-        Pagination: genDefaultPagination(),
-        RiskType: "",
-        Search: "",
-        Severity: ""
-    });
-    return <div>
-        <Form onSubmitCapture={e => {
-            e.preventDefault()
-            ipcRenderer.invoke("DeleteRisk", {Filter: params}).then(e => {
-                props.onClose()
-            }).catch(() => {
-            }).finally()
-        }} layout={"horizontal"} labelCol={{span: 5}} wrapperCol={{span: 14}}>
-            <InputItem label={"按目标网络删除"} value={params.Network} setValue={Network => setParams({...params, Network})}/>
-            {types && types.length > 0 && <ManyMultiSelectForString
-                label={"按类型删除"} value={params.RiskType || ""}
-                formItemStyle={{minWidth: 280}}
-                setValue={RiskType => setParams({...params, RiskType})} defaultSep={"|"}
-                data={types.map(i => {
-                    return {value: (i.Names || []).join(","), label: `${i.Verbose}(${i.Total})`}
-                })}
-            />}
-            {severities && severities.length && <ManyMultiSelectForString
-                label={"按漏洞级别"} value={params.Severity || ""} defaultSep={"|"}
-                formItemStyle={{minWidth: 240}}
-                setValue={Severity => setParams({...params, Severity})}
-                data={severities.map(i => {
-                    return {value: (i.Names || []).join(","), label: `${i.Verbose}(${i.Total})`}
-                })}
-            />}
-            <InputItem label={"按关键字删除"} value={params.Search} setValue={Search => setParams({...params, Search})}/>
-            <Form.Item label={" "} colon={false}>
-                <Space>
-                    <Button danger={true} type={"primary"} htmlType={"submit"}>删除</Button>
-                    <Popconfirm title={"确定要删除全部吗？"} onConfirm={() => {
-                        ipcRenderer.invoke("DeleteRisk", {DeleteAll: true}).then(e => {
-                            props.onClose()
-                        }).catch(e => console.info(e)).finally()
-                    }}>
-                        <Button danger={true} htmlType={"submit"}>删除全部</Button>
-                    </Popconfirm>
-                </Space>
-            </Form.Item>
-        </Form>
-    </div>
-};
-
 interface RiskDetailsProp {
     info: Risk
     isShowTime?: boolean
     shrink?: boolean
 }
 
-export const RiskDetails: React.FC<RiskDetailsProp> = React.memo((props) => {
+export const RiskDetails: React.FC<RiskDetailsProp> = React.memo((props: RiskDetailsProp) => {
     const {info, isShowTime = true} = props
     const title = TitleColor.filter((item) => item.key.includes(info.Severity || ""))[0]
 
@@ -667,7 +760,7 @@ export const RiskDetails: React.FC<RiskDetailsProp> = React.memo((props) => {
             title={
                 <div className='container-title-body'>
                     <div className='title-icon'>
-                        <img src={title?.img || infoImg} className='icon-img'/>
+                        <img src={title?.img || infoImg} className='icon-img' />
                     </div>
 
                     <div className='title-header'>
@@ -679,24 +772,28 @@ export const RiskDetails: React.FC<RiskDetailsProp> = React.memo((props) => {
                             <div className={`${title?.tag || "title-background-default"} subtitle-level`}>
                                 {title ? title.name : info.Severity || "-"}
                             </div>
-                            <div style={{maxWidth: 260}} className='subtitle-spacing text-ellipsis'>
+                            <div className='subtitle-spacing subtitle-url'>
                                 Url
-                                <span className='subtitle-font' title={info?.Url || "-"}>
+                                <Paragraph className='subtitle-font text-ellipsis' copyable ellipsis>
                                     {info?.Url || "-"}
-                                </span>
+                                </Paragraph>
                             </div>
-                            {isShowTime && <div className='subtitle-spacing'>
-                                发现时间
-                                <span className='subtitle-font'>
-                                    {info.CreatedAt > 0 ? formatTimestamp(info.CreatedAt) : "-"}
-                                </span>
-                            </div>}
-                            {isShowTime && <div>
-                                最近更新时间
-                                <span className='subtitle-font'>
-                                    {info.CreatedAt > 0 ? formatTimestamp(info.CreatedAt) : "-"}
-                                </span>
-                            </div>}
+                            {isShowTime && (
+                                <div className='subtitle-spacing'>
+                                    发现时间
+                                    <span className='subtitle-font'>
+                                        {info.CreatedAt > 0 ? formatTimestamp(info.CreatedAt) : "-"}
+                                    </span>
+                                </div>
+                            )}
+                            {isShowTime && (
+                                <div>
+                                    最近更新时间
+                                    <span className='subtitle-font'>
+                                        {info.CreatedAt > 0 ? formatTimestamp(info.CreatedAt) : "-"}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -736,17 +833,41 @@ export const RiskDetails: React.FC<RiskDetailsProp> = React.memo((props) => {
                 </div>
             </Descriptions.Item>
 
-            {!props.shrink && <>
-                <Descriptions.Item label='Parameter' span={3}>
-                    <div>{info.Parameter || "-"}</div>
-                </Descriptions.Item>
-                <Descriptions.Item label='Payload' span={3}>
-                    <div>{info.Payload || "-"}</div>
-                </Descriptions.Item>
-                <Descriptions.Item label='详情' span={3}>
-                    <div style={{maxHeight: 180, overflow:"auto"}}>{info.Details || "-"}</div>
-                </Descriptions.Item>
-            </>}
+            {!props.shrink && (
+                <>
+                    <Descriptions.Item label='Parameter' span={3}>
+                        <div>{info.Parameter || "-"}</div>
+                    </Descriptions.Item>
+                    <Descriptions.Item label='Payload' span={3}>
+                        <div>{info.Payload || "-"}</div>
+                    </Descriptions.Item>
+                    {(info?.Request || []).length > 0 && (
+                        <Descriptions.Item label='Request' span={3}>
+                            <div style={{height: 300}}>
+                                <HTTPPacketEditor
+                                    originValue={info?.Request || new Uint8Array()}
+                                    readOnly={true}
+                                    noHeader={true}
+                                />
+                            </div>
+                        </Descriptions.Item>
+                    )}
+                    {(info?.Response || []).length > 0 && (
+                        <Descriptions.Item label='Response' span={3}>
+                            <div style={{height: 300}}>
+                                <HTTPPacketEditor
+                                    originValue={info?.Response || new Uint8Array()}
+                                    readOnly={true}
+                                    noHeader={true}
+                                />
+                            </div>
+                        </Descriptions.Item>
+                    )}
+                    <Descriptions.Item label='详情' span={3}>
+                        <div style={{maxHeight: 180, overflow: "auto"}}>{info.Details || "-"}</div>
+                    </Descriptions.Item>
+                </>
+            )}
         </Descriptions>
     )
 })

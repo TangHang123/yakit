@@ -17,8 +17,13 @@ const createWindow = () => {
     })
 
     win = new BrowserWindow({
+<<<<<<< HEAD
         width: 1600,
         height: 1000,
+=======
+        width: 1600, height: 1000,
+        autoHideMenuBar: true,
+>>>>>>> master
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: false,
@@ -108,6 +113,7 @@ app.on("window-all-closed", function () {
     // macos quit;
     // if (process.platform !== 'darwin') app.quit()
 })
+<<<<<<< HEAD
 
 // login modal
 ipcMain.on("user-sign-in", (event, arg) => {
@@ -206,3 +212,5 @@ ipcMain.on("user-sign-out", (event) => {
     USER_INFO.role = null
     USER_INFO.token = null
 })
+=======
+>>>>>>> master

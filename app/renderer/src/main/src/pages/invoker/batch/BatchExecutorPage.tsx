@@ -20,8 +20,8 @@ import {
 } from "antd";
 import {AutoCard} from "../../../components/AutoCard";
 import {
-    CopyableField,
-    InputFileNameItem,
+    CopyableField, InputFileNameItem,
+    InputFileNameItemProps,
     InputInteger,
     InputItem,
     OneLine,
@@ -44,7 +44,8 @@ import "./BatchExecutorPage.css"
 import {CacheStatusCardProps} from "../../../hook/useHoldingIPCRStream";
 import {writeExecResultXTerm} from "../../../utils/xtermUtils";
 import {PluginResultUI, StatusCardInfoProps, StatusCardProps} from "../../yakitStore/viewers/base";
-import { NewTaskHistoryProps } from "./BatchExecuteByFilter";
+import {NewTaskHistoryProps} from "./BatchExecuteByFilter";
+import {showUnfinishedBatchTaskList, UnfinishedBatchTask} from "./UnfinishedBatchTaskList";
 
 export interface BatchExecutorPageProp {
 
@@ -443,6 +444,7 @@ export const YakScriptWithCheckboxLine: React.FC<YakScriptWithCheckboxLineProp> 
 
 interface ExecSelectedPluginsProp {
     disableStartButton: boolean
+    initTargetRequest?: TargetRequest
     onSubmit: (target: TargetRequest) => any
     loading?: boolean
     executing?: boolean
@@ -458,12 +460,16 @@ export interface TargetRequest {
     allowFuzz: boolean
     concurrent: number
     totalTimeout: number
+    progressTaskCount: number
+    proxy: string,
 }
 
-export const ExecSelectedPlugins: React.FC<ExecSelectedPluginsProp> = React.memo((props) => {
-    const [target, setTarget] = useState<TargetRequest>({
+export const ExecSelectedPlugins: React.FC<ExecSelectedPluginsProp> = React.memo((props: ExecSelectedPluginsProp) => {
+    const [target, setTarget] = useState<TargetRequest>(props.initTargetRequest ? props.initTargetRequest : {
         allowFuzz: true, target: "", targetFile: "",
-        concurrent: 5, totalTimeout: 3600 * 2,
+        concurrent: 3, totalTimeout: 3600 * 2,
+        progressTaskCount: 5,
+        proxy: "",
     });
     const {loading, executing, disableStartButton, history, executeHistory} = props;
 
@@ -496,8 +502,7 @@ export const ExecSelectedPlugins: React.FC<ExecSelectedPluginsProp> = React.memo
                                 disabled={executing ? false : disableStartButton}
                                 onClick={props.onCancel}
                             >
-                                {" "}
-                                停止执行{" "}
+                                停止执行
                             </Button>
                         ) : (
                             <Button
@@ -515,8 +520,9 @@ export const ExecSelectedPlugins: React.FC<ExecSelectedPluginsProp> = React.memo
 
             <div style={{paddingLeft: 70}}>
                 <Space>
-                    <Tag>并发: {target.concurrent}</Tag>
-                    <Tag>总超时: {target.totalTimeout}</Tag>
+                    {target.proxy && <Tag>代理: {target.proxy}</Tag>}
+                    {/*<Tag>进程: {target.concurrent}</Tag>*/}
+                    <Tag>总超时: {target.totalTimeout}s</Tag>
                     {target.targetFile &&
                     <Tag color={"geekblue"}>
                         <Space>
@@ -524,13 +530,31 @@ export const ExecSelectedPlugins: React.FC<ExecSelectedPluginsProp> = React.memo
                         </Space>
                     </Tag>
                     }
-                    <Popover title={"额外配置"} content={<div style={{width: 340}}>
+                    <Popover title={"额外配置"} content={<div style={{width: 500}}>
                         <Form
                             layout={"horizontal"} size={"small"}
                             onSubmitCapture={e => e.preventDefault()}
+                            labelCol={{span: 8}} wrapperCol={{span: 14}}
                         >
-                            <InputInteger label={"设置并发"} value={target.concurrent}
+                            <InputItem
+                                label={"代理"} value={target.proxy}
+                                setValue={t => {
+                                    setTarget({...target, proxy: t})
+                                }}
+                                autoComplete={[
+                                    "http://127.0.0.1:8080",
+                                    "http://127.0.0.1:8083",
+                                    "http://127.0.0.1:7890",
+                                    "socks://127.0.0.1:7890",
+                                ]} style={{marginBottom: 4}}
+                            />
+                            <InputInteger label={"并发进程"} value={target.concurrent}
                                           setValue={c => setTarget({...target, concurrent: c})}
+                                          formItemStyle={{marginBottom: 4}}
+                            />
+                            <InputInteger label={"每个进程任务数"}
+                                          value={target.progressTaskCount}
+                                          setValue={e => setTarget({...target, progressTaskCount: e})}
                                           formItemStyle={{marginBottom: 4}}
                             />
                             <InputInteger label={"总超时时间"} value={target.totalTimeout}
@@ -550,41 +574,50 @@ export const ExecSelectedPlugins: React.FC<ExecSelectedPluginsProp> = React.memo
                     </div>} trigger={["click"]}>
                         <Button type="link" style={{padding: 4}}> 额外配置 </Button>
                     </Popover>
-                    {history.length !== 0 && (
-                        <Popover
-                            title={"历史任务(选择后可回显目标与poc)"}
-                            trigger={["click"]}
-                            placement='bottom'
-                            content={
-                                <div className='history-list-body'>
-                                    {history.map((item) => {
-                                        return (
-                                            <div
-                                                className='list-opt'
-                                                key={item.time}
-                                                onClick={() => {
-                                                    if (executing) return
-                                                    if(!item.simpleQuery){
-                                                        failed("该条历史记录无法使用!")
-                                                        return
-                                                    }
-                                                    executeHistory(item)
-                                                    setTarget({...item.target})
-                                                }}
-                                            >
-                                                {item.time}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            }
-                        >
-                            <Button type='link' style={{padding: 4}}>
-                                {" "}
-                                历史任务{" "}
-                            </Button>
-                        </Popover>
-                    )}
+                    <Button type={"link"} onClick={() => {
+                        showUnfinishedBatchTaskList((task: UnfinishedBatchTask) => {
+                            ipcRenderer.invoke("send-to-tab", {
+                                type: "batch-exec-recover",
+                                data: task,
+                            })
+                        })
+                    }}>
+                        未完成的任务
+                    </Button>
+                    {/*{history.length !== 0 && (*/}
+                    {/*    <Popover*/}
+                    {/*        title={"历史任务(选择后可回显目标与poc)"}*/}
+                    {/*        trigger={["click"]}*/}
+                    {/*        placement='bottom'*/}
+                    {/*        content={*/}
+                    {/*            <div className='history-list-body'>*/}
+                    {/*                {history.map((item) => {*/}
+                    {/*                    return (*/}
+                    {/*                        <div*/}
+                    {/*                            className='list-opt'*/}
+                    {/*                            key={item.time}*/}
+                    {/*                            onClick={() => {*/}
+                    {/*                                if (executing) return*/}
+                    {/*                                if (!item.simpleQuery) {*/}
+                    {/*                                    failed("该条历史记录无法使用!")*/}
+                    {/*                                    return*/}
+                    {/*                                }*/}
+                    {/*                                executeHistory(item)*/}
+                    {/*                                setTarget({...item.target})*/}
+                    {/*                            }}*/}
+                    {/*                        >*/}
+                    {/*                            {item.time}*/}
+                    {/*                        </div>*/}
+                    {/*                    )*/}
+                    {/*                })}*/}
+                    {/*            </div>*/}
+                    {/*        }*/}
+                    {/*    >*/}
+                    {/*        <Button type='link' style={{padding: 4}}>*/}
+                    {/*            历史任务*/}
+                    {/*        </Button>*/}
+                    {/*    </Popover>*/}
+                    {/*)}*/}
                 </Space>
             </div>
         </Form>

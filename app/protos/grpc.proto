@@ -39,7 +39,7 @@ message ExecBatchYakScriptRequest {
   // 模块类型，默认为 nuclei
   string Type = 5;
 
-  // 并发
+  // 并发（进程）
   int64 Concurrent = 6;
 
   // 精确使用脚本名称
@@ -49,6 +49,17 @@ message ExecBatchYakScriptRequest {
   // Tags with exclude / include
   QueryYakScriptRequest PluginFilter = 12;
   bool EnablePluginFilter = 13;
+
+  // 设置一个代理
+  string Proxy = 14;
+
+  // 每个进程的任务数量
+  int64 ProgressTaskCount = 15;
+
+  // 基础进度 - 这个默认是 0.1 一般别用，只在 Recover 的时候可能才会有用处
+  double BaseProgress = 16;
+  // 这个很关键，不然会报错
+  bool FromRecover = 17;
 }
 
 message ExecBatchYakScriptResult {
@@ -69,6 +80,12 @@ message ExecBatchYakScriptResult {
   int64 ProgressTotal = 11;
   int64 ProgressCount = 12;
 
+  // 正在执行中的进程数
+  int64 ProgressRunning = 17;
+
+  // 正在执行中的扫描任务数量
+  int64 ScanTaskExecutingCount = 18;
+
   // 任务相关内容
   string Target = 13;
   repeated ExecParamItem ExtraParam = 14;
@@ -80,6 +97,10 @@ message ExecBatchYakScriptResult {
 
 message GetYakScriptByIdRequest {
   int64 Id = 1;
+}
+
+message GetYakScriptByNameRequest {
+  string Name = 1;
 }
 
 service Yak {
@@ -104,12 +125,18 @@ service Yak {
   rpc AutoUpdateYakModule(Empty) returns (stream ExecResult);
   rpc ExecYakScript(ExecRequest) returns (stream ExecResult);
   rpc ExecBatchYakScript(ExecBatchYakScriptRequest) returns (stream ExecBatchYakScriptResult);
+  rpc GetExecBatchYakScriptUnfinishedTask(Empty) returns (GetExecBatchYakScriptUnfinishedTaskResponse);
+  rpc GetExecBatchYakScriptUnfinishedTaskByUid(GetExecBatchYakScriptUnfinishedTaskByUidRequest) returns (ExecBatchYakScriptRequest);
+  rpc PopExecBatchYakScriptUnfinishedTaskByUid(GetExecBatchYakScriptUnfinishedTaskByUidRequest) returns (ExecBatchYakScriptRequest);
+  rpc RecoverExecBatchYakScriptUnfinishedTask(RecoverExecBatchYakScriptUnfinishedTaskRequest) returns (stream ExecBatchYakScriptResult);
 
   // yakScript
   rpc QueryYakScript(QueryYakScriptRequest) returns (QueryYakScriptResponse);
+  rpc QueryYakScriptByYakScriptName(QueryYakScriptRequest) returns (stream YakScript);
   rpc SaveYakScript(YakScript) returns (YakScript);
   rpc DeleteYakScript(DeleteYakScriptRequest) returns (Empty);
   rpc GetYakScriptById(GetYakScriptByIdRequest) returns (YakScript);
+  rpc GetYakScriptByName(GetYakScriptByNameRequest) returns (YakScript);
   rpc IgnoreYakScript(DeleteYakScriptRequest) returns (Empty);
   rpc UnIgnoreYakScript(DeleteYakScriptRequest) returns (Empty);
   rpc ExportYakScript(ExportYakScriptRequest) returns (ExportYakScriptResponse);
@@ -134,6 +161,8 @@ service Yak {
   rpc RedirectRequest(RedirectRequestParams) returns (FuzzerResponse);
   rpc HTTPRequestMutate(HTTPRequestMutateParams) returns (MutateResult);
   rpc HTTPResponseMutate(HTTPResponseMutateParams) returns (MutateResult);
+  rpc FixUploadPacket(FixUploadPacketRequest) returns (FixUploadPacketResponse);
+  rpc IsMultipartFormDataRequest(FixUploadPacketRequest) returns (IsMultipartFormDataRequestResult);
 
   // FuzzerResponse 对象转 HTTPFlow：以便分析和模糊测试
   rpc ConvertFuzzerResponseToHTTPFlow(FuzzerResponse) returns (HTTPFlow);
@@ -178,6 +207,9 @@ service Yak {
   rpc RemoveFromMenu(RemoveFromMenuRequest) returns (Empty);
   rpc YakScriptIsInMenu(YakScriptIsInMenuRequest) returns (Empty);
   rpc GetAllMenuItem(Empty) returns (MenuByGroup);
+  rpc DeleteAllMenuItem(Empty) returns (Empty);
+  rpc ImportMenuItem(ImportMenuItemRequest) returns (Empty);
+  rpc ExportMenuItem(Empty) returns (ExportMenuItemResult);
   rpc GetMenuItemById(GetMenuItemByIdRequest) returns (MenuItem);
   rpc QueryGroupsByYakScriptId(QueryGroupsByYakScriptIdRequest) returns (GroupNames);
 
@@ -255,6 +287,65 @@ service Yak {
 
   // 尝试自动解码
   rpc AutoDecode(AutoDecodeRequest) returns (AutoDecodeResponse);
+
+  rpc GetSystemProxy(Empty) returns (GetSystemProxyResult);
+  rpc SetSystemProxy(SetSystemProxyRequest) returns (Empty);
+
+  // 设置通用存储
+  rpc GetKey(GetKeyRequest) returns (GetKeyResult);
+  rpc SetKey(SetKeyRequest) returns (Empty);
+}
+
+message SetKeyRequest {
+  string Key = 1;
+  string Value = 2;
+  int64 TTL = 3;
+}
+
+message GetKeyRequest {
+  string Key = 1;
+}
+
+message GetKeyResult {
+  string Value = 1;
+}
+
+message SetSystemProxyRequest {
+  string HttpProxy = 1;
+}
+
+message GetSystemProxyResult {
+  string CurrentProxy = 1;
+}
+
+message GetExecBatchYakScriptUnfinishedTaskByUidRequest {
+  string Uid = 1;
+}
+
+message RecoverExecBatchYakScriptUnfinishedTaskRequest {
+  string Uid = 1;
+}
+
+message ExecBatchYakScriptUnfinishedTask {
+  double Percent = 1;
+  int64 CreatedAt = 2;
+  string Uid = 3;
+}
+
+message GetExecBatchYakScriptUnfinishedTaskResponse {
+  repeated ExecBatchYakScriptUnfinishedTask Tasks = 1;
+}
+
+message FixUploadPacketRequest {
+  bytes Request = 1;
+}
+
+message FixUploadPacketResponse {
+  bytes Request = 1;
+}
+
+message IsMultipartFormDataRequestResult {
+  bool IsMultipartFormData = 1;
 }
 
 message AutoDecodeRequest {
@@ -340,6 +431,8 @@ message DeleteReportRequest {
   int64 Id = 1;
   string Hash = 2;
   QueryReportsRequest Filter = 3;
+  repeated int64 IDs = 4;
+  bool DeleteAll = 5;
 }
 
 message QueryReportsResponse {
@@ -546,6 +639,7 @@ message DeleteRiskRequest {
   repeated int64 Ids = 4;
   QueryRisksRequest Filter = 3;
   bool DeleteAll = 5;
+  bool DeleteRepetition = 6;
 }
 
 message QueryRiskRequest {
@@ -580,6 +674,13 @@ message Risk {
   int64 UpdatedAt = 17;
 
   string Severity = 19;
+
+  // 数据包提取出来！
+  bytes Request = 20;
+  bytes Response = 21;
+
+  // 这个一般用于生成报告追踪报告中产生的漏洞
+  string RuntimeId = 22;
 }
 
 message QueryRisksRequest {
@@ -738,6 +839,8 @@ message DeleteDomainsRequest {
   string DomainKeyword = 2;
   string Network = 3;
   int64 ID = 4;
+  QueryDomainsRequest Filter = 5;
+  repeated int64 IDs = 6;
 }
 
 message QueryDomainsResponse {
@@ -908,6 +1011,15 @@ message AddToMenuRequest {
   string Verbose = 3;
 }
 
+message ImportMenuItemRequest {
+  string RawJson = 1;
+  string JsonFileName = 2;
+}
+
+message ExportMenuItemResult {
+  string RawJson = 1;
+}
+
 message UpdateFromYakitResourceRequest {
   string Proxy = 1;
   string BaseSourceUrl = 2;
@@ -969,6 +1081,9 @@ message DeletePortsRequest {
   string Ports = 2;
   repeated int64 Id = 3;
   bool All = 4;
+  repeated int64 Ids = 5;
+  bool DeleteAll = 6;
+  QueryPortsRequest Filter = 7;
 }
 
 message QueryPortsRequest {
@@ -1204,6 +1319,7 @@ message FuzzerParamItem {
 
 message FuzzerRequest {
   string Request = 1;
+  bytes RequestRaw = 16;  // 这里是因为麻将块儿的问题，还是需要处理一下类型
   repeated FuzzerParamItem Params = 2;
   int64 Concurrent = 3;
   bool IsHTTPS = 4;
@@ -1455,6 +1571,9 @@ message MITMRequest {
   // 设置内容替代器
   bool setContentReplacers = 38;
   repeated MITMContentReplacer replacers = 39;
+
+  // 恢复 filter, 防止用户删除了全部的 filter
+  bool setResetFilter = 41;
 }
 
 message MITMContentReplacer {

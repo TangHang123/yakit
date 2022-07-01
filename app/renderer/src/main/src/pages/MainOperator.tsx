@@ -1,46 +1,40 @@
 import React, {ReactNode, useEffect, useRef, useState} from "react"
 import {
     Button,
+    Checkbox,
     Col,
+    Divider,
+    Dropdown,
     Image,
+    Input,
     Layout,
     Menu,
     Modal,
     Popover,
     Row,
     Space,
-    Tabs,
-    Input,
-    Divider,
-    Tag,
     Spin,
-    Dropdown,
-    Typography,
-    Checkbox
+    Tabs,
+    Tag,
+    Typography
 } from "antd"
 import {ContentByRoute, MenuDataProps, NoScrollRoutes, Route, RouteMenuData} from "../routes/routeSpec"
 import {
     CloseOutlined,
     EditOutlined,
     EllipsisOutlined,
+    ExclamationCircleOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
-    ReloadOutlined,
     PoweroffOutlined,
+    ReloadOutlined,
     SettingOutlined,
-    ExclamationCircleOutlined,
 } from "@ant-design/icons"
-import {failed, success} from "../utils/notification"
+import {failed, info, success} from "../utils/notification"
 import {showModal} from "../utils/showModal"
 import {YakLogoBanner} from "../utils/logo"
-import {
-    AutoUpdateYakModuleButton,
-    ConfigGlobalReverseButton,
-    ReversePlatformStatus,
-    YakitVersion,
-    YakVersion
-} from "../utils/basic"
-import {CompletionTotal, setCompletions} from "../utils/monacoSpec/yakCompletionSchema"
+import {ConfigGlobalReverse, ReversePlatformStatus, YakitVersion, YakVersion} from "../utils/basic"
+import {CompletionTotal, getGlobalCompletions, setCompletions} from "../utils/monacoSpec/yakCompletionSchema"
 import {randomString} from "../utils/randomUtil"
 import MDEditor from "@uiw/react-md-editor"
 import {genDefaultPagination, QueryYakScriptRequest, QueryYakScriptsResponse} from "./invoker/schema"
@@ -51,7 +45,6 @@ import ReactDOM from "react-dom"
 import debounce from "lodash/debounce"
 import {AutoSpin} from "../components/AutoSpin"
 import cloneDeep from "lodash/cloneDeep"
-import {Fields} from "./risks/RiskTable";
 import {RiskStatsTag} from "../utils/RiskStatsTag";
 import {ItemSelects} from "../components/baseTemplate/FormItemUtil"
 import {BugInfoProps, BugList, CustomBugList} from "./invoker/batch/YakBatchExecutors"
@@ -66,6 +59,11 @@ import {SimpleQueryYakScriptSchema} from "./invoker/batch/QueryYakScriptParam"
 
 import "./main.css"
 import "./GlobalClass.scss"
+import {UnfinishedBatchTask} from "./invoker/batch/UnfinishedBatchTaskList";
+import {LoadYakitPluginForm} from "./yakitStore/YakitStorePage";
+import {showConfigSystemProxyForm} from "../utils/ConfigSystemProxy";
+import {showConfigMenuItems} from "../utils/ConfigMenuItems";
+import {YakCodeEditor} from "../utils/editors";
 
 const {ipcRenderer} = window.require("electron")
 const MenuItem = Menu.Item
@@ -75,7 +73,7 @@ const {Text} = Typography
 const FuzzerCache = "fuzzer-list-cache"
 const WindowsCloseFlag = "windows-close-flag"
 
-const singletonRoute = [
+const singletonRoute: Route[] = [
     Route.HTTPHacker,
     Route.ShellReceiver,
     Route.ReverseServer,
@@ -148,6 +146,7 @@ interface PageCache {
     singleNode: ReactNode | any
     multipleNode: multipleNodeInfo[] | any[]
     multipleCurrentKey?: string
+    hideAdd?: boolean
 }
 
 export interface fuzzerInfoProp {
@@ -182,7 +181,7 @@ const Main: React.FC<MainProp> = (props) => {
             multipleNode: []
         }
     ])
-    const [currentTabKey, setCurrentTabKey] = useState<string>(Route.HTTPHacker)
+    const [currentTabKey, setCurrentTabKey] = useState<Route | string>(Route.HTTPHacker)
 
     // 信任用户弹框
     const [trustShow, setTrustShow] = useState<boolean>(false)
@@ -280,7 +279,10 @@ const Main: React.FC<MainProp> = (props) => {
         return targets.length > 0 ? pageCache.indexOf(targets[0]) : -1
     }
     const addTabPage = useMemoizedFn(
-        (route: Route, nodeParams?: { time?: string; node: ReactNode; isRecord?: boolean }) => {
+        (route: Route, nodeParams?: {
+            time?: string; node: ReactNode; isRecord?: boolean,
+            hideAdd?: boolean
+        }) => {
             const filterPage = pageCache.filter((i) => i.route === route)
             const filterPageLength = filterPage.length
 
@@ -288,21 +290,21 @@ const Main: React.FC<MainProp> = (props) => {
                 if (filterPageLength > 0) {
                     setCurrentTabKey(route)
                 } else {
-                    const tabName = routeKeyToLabel.get(route) || `${route}`
+                    const tabName = routeKeyToLabel.get(`${route}`) || `${route}`
                     setPageCache([
                         ...pageCache,
                         {
                             verbose: tabName,
                             route: route,
                             singleNode: ContentByRoute(route),
-                            multipleNode: []
+                            multipleNode: [],
                         }
                     ])
                     setCurrentTabKey(route)
                 }
             } else {
                 if (filterPageLength > 0) {
-                    const tabName = routeKeyToLabel.get(route) || `${route}`
+                    const tabName = routeKeyToLabel.get(`${route}`) || `${route}`
                     const tabId = `${route}-[${randomString(49)}]`
                     const time = new Date().getTime().toString()
                     const node: multipleNodeInfo = {
@@ -323,7 +325,7 @@ const Main: React.FC<MainProp> = (props) => {
                     setCurrentTabKey(route)
                     if (nodeParams && !!nodeParams.isRecord) addFuzzerList(nodeParams?.time || time)
                 } else {
-                    const tabName = routeKeyToLabel.get(route) || `${route}`
+                    const tabName = routeKeyToLabel.get(`${route}`) || `${route}`
                     const tabId = `${route}-[${randomString(49)}]`
                     const time = new Date().getTime().toString()
                     const node: multipleNodeInfo = {
@@ -339,7 +341,8 @@ const Main: React.FC<MainProp> = (props) => {
                             route: route,
                             singleNode: undefined,
                             multipleNode: [node],
-                            multipleCurrentKey: tabId
+                            multipleCurrentKey: tabId,
+                            hideAdd: nodeParams?.hideAdd
                         }
                     ])
                     setCurrentTabKey(route)
@@ -374,7 +377,7 @@ const Main: React.FC<MainProp> = (props) => {
             const targetCache = pageCache[targetIndex + 1]
             setCurrentTabKey(targetCache.route)
         }
-        if (targetIndex === 0 && pageCache.length === 1) setCurrentTabKey("")
+        if (targetIndex === 0 && pageCache.length === 1) setCurrentTabKey("" as any)
 
         setPageCache(pageCache.filter((i) => i.route !== route))
 
@@ -412,7 +415,7 @@ const Main: React.FC<MainProp> = (props) => {
         }
 
         if (index === 0 && removeArr.length === 1) {
-            removePage(type)
+            removePage(`${type}`)
             return
         }
 
@@ -494,7 +497,7 @@ const Main: React.FC<MainProp> = (props) => {
             if (pageCache.length === 0) return
 
             setLoading(true)
-            removePage(currentTabKey)
+            removePage(`${currentTabKey}`)
             setTimeout(() => setLoading(false), 300);
             return
         }
@@ -569,7 +572,9 @@ const Main: React.FC<MainProp> = (props) => {
             if (!flag) fetchFuzzerList()
             // fetchFuzzerList()
         })
-        return () => ipcRenderer.removeAllListeners("fetch-fuzzer-setting-data")
+        return () => {
+            ipcRenderer.removeAllListeners("fetch-fuzzer-setting-data")
+        }
     }, [])
 
     // 加载补全
@@ -750,14 +755,27 @@ const Main: React.FC<MainProp> = (props) => {
             setCurrentTabKey(Route.YakScript)
         }
     })
+
+    const addBatchExecRecover = useMemoizedFn((task: UnfinishedBatchTask) => {
+        addTabPage(Route.BatchExecutorRecover, {
+            hideAdd: true,
+            node: ContentByRoute(Route.BatchExecutorRecover, undefined, {
+                recoverUid: task.Uid,
+                recoverBaseProgress: task.Percent
+            })
+        })
+    })
+
     useEffect(() => {
         ipcRenderer.on("fetch-send-to-tab", (e, res: any) => {
             const {type, data = {}} = res
-            if (type === "fuzzer") addFuzzer(data)
-            if (type === "scan-port") addScanPort(data)
-            if (type === "brute") addBrute(data)
-            if (type === "bug-test") addBugTest(1, data)
-            if (type === "plugin-store") addYakRunning(data)
+            if (type === "fuzzer") addFuzzer(data);
+            if (type === "scan-port") addScanPort(data);
+            if (type === "brute") addBrute(data);
+            if (type === "bug-test") addBugTest(1, data);
+            if (type === "plugin-store") addYakRunning(data);
+            if (type === "batch-exec-recover") addBatchExecRecover(data as UnfinishedBatchTask);
+            console.info("send to tab: ", type)
         })
 
         return () => {
@@ -807,7 +825,7 @@ const Main: React.FC<MainProp> = (props) => {
                                         closeAllCache()
                                         break
                                     case "other":
-                                        closeOtherCache(barNode.key as Route)
+                                        closeOtherCache(`${barNode.key}`)
                                         break
                                     default:
                                         break
@@ -866,11 +884,38 @@ const Main: React.FC<MainProp> = (props) => {
                                 {/* <Tag color={engineStatus === "ok" ? "green" : "red"}>Yak 引擎状态：{engineStatus}</Tag> */}
                                 <ReversePlatformStatus/>
                                 <Dropdown forceRender={true} overlay={<Menu>
-                                    <Menu.Item key={"update"}>
-                                        <AutoUpdateYakModuleButton/>
+                                    <Menu.Item key={"update"} onClick={() => {
+                                        showModal({
+                                            title: "更新插件源",
+                                            width: 800,
+                                            content: <div style={{width: 800}}>
+                                                <LoadYakitPluginForm onFinished={() => {
+                                                    info("更新进程执行完毕")
+                                                }}/>
+                                            </div>
+                                        })
+                                    }}>
+                                        <Button type={"link"}>更新 Yakit 插件源</Button>
                                     </Menu.Item>
-                                    <Menu.Item key={"reverse-global"}>
-                                        <ConfigGlobalReverseButton/>
+                                    <Menu.Item key={"reverse-global"} onClick={() => {
+                                        showModal({
+                                            title: "更新插件源",
+                                            width: 800,
+                                            content: <div style={{width: 800}}>
+                                                <ConfigGlobalReverse/>
+                                            </div>
+                                        })
+                                    }}>
+                                        <Button type={"link"}>配置全局反连</Button>
+                                        {/*<ConfigGlobalReverseButton/>*/}
+                                    </Menu.Item>
+                                    {/*<Menu.Item key={"config-system-proxy"} onClick={() => {*/}
+                                    {/*    showConfigSystemProxyForm()*/}
+                                    {/*}}>*/}
+                                    {/*    <Button type={"link"}>配置系统代理</Button>*/}
+                                    {/*</Menu.Item>*/}
+                                    <Menu.Item key={"config-menu"} onClick={() => showConfigMenuItems()}>
+                                        <Button type={"link"}>配置菜单栏</Button>
                                     </Menu.Item>
                                 </Menu>} trigger={["click"]}>
                                     <Button icon={<SettingOutlined/>}>
@@ -984,11 +1029,11 @@ const Main: React.FC<MainProp> = (props) => {
                                                     </Menu.SubMenu>
                                                 )
                                             })}
-                                            {(routeMenuData || []).map((i) => {
+                                            {(routeMenuData || []).filter(e => !e.hidden).map((i) => {
                                                 if (i.subMenuData) {
                                                     return (
                                                         <Menu.SubMenu icon={i.icon} key={i.key} title={i.label}>
-                                                            {(i.subMenuData || []).map((subMenu) => {
+                                                            {(i.subMenuData || []).filter(e => !e.hidden).map((subMenu) => {
                                                                 return (
                                                                     <MenuItem icon={subMenu.icon} key={subMenu.key}
                                                                               disabled={subMenu.disabled}>
@@ -1067,7 +1112,7 @@ const Main: React.FC<MainProp> = (props) => {
                                                                         <Input
                                                                             size={"small"}
                                                                             defaultValue={i.verbose}
-                                                                            onBlur={(e) => updateCacheVerbose(i.route, e.target.value)}
+                                                                            onBlur={(e) => updateCacheVerbose(`${i.route}`, e.target.value)}
                                                                         />
                                                                     </>
                                                                 }
@@ -1076,7 +1121,7 @@ const Main: React.FC<MainProp> = (props) => {
                                                             </Popover>
                                                             <CloseOutlined
                                                                 className='main-container-cion'
-                                                                onClick={() => removePage(i.route)}
+                                                                onClick={() => removePage(`${i.route}`)}
                                                             />
                                                         </Space>
                                                     }
@@ -1099,7 +1144,7 @@ const Main: React.FC<MainProp> = (props) => {
                                                                 tabType={i.route}
                                                                 pages={i.multipleNode}
                                                                 currentKey={i.multipleCurrentKey || ""}
-                                                                isShowAdd={true}
+                                                                isShowAdd={!i.hideAdd}
                                                                 setCurrentKey={(key, type) => {
                                                                     setMultipleCurrentKey(key, type as Route)
                                                                 }}
@@ -1110,7 +1155,7 @@ const Main: React.FC<MainProp> = (props) => {
                                                                     removeOtherMultipleNodePage(key, type as Route)
                                                                 }}
                                                                 onAddTab={() => menuAddPage(i.route)}
-                                                            ></MainTabs>
+                                                            />
                                                         )}
                                                     </div>
                                                 </Tabs.TabPane>
@@ -1186,11 +1231,12 @@ const Main: React.FC<MainProp> = (props) => {
                         optValue: "key",
                         value: (bugTestValue || [])[0]?.key,
                         onChange: (value, option: any) => setBugTestValue(value ? [{
+                            filter: option?.filter,
                             key: option?.key,
                             title: option?.title
                         }] : [])
                     }}
-                ></ItemSelects>
+                />
             </Modal>
             <Login
                 visible={loginshow}
