@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@ant-design/compatible": "^1.0.8",
+    "@ant-design/icons": "latest",
     "@ant-design/pro-card": "^1.18.1",
     "@ant-design/pro-table": "^2.57.1",
     "@dnd-kit/core": "^4.0.1",
@@ -58,8 +59,7 @@
     "xterm-addon-search-bar": "^0.2.0",
     "xterm-addon-unicode11": "^0.3.0",
     "xterm-for-react": "^1.0.4",
-    "zustand": "^4.0.0-rc.1",
-    "@ant-design/icons": "latest"
+    "zustand": "^4.0.0-rc.1"
   },
   "scripts": {
     "electron-render": "cross-env BROWSER=none react-app-rewired start",
