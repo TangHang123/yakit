@@ -174,8 +174,7 @@ export const PluginResultUI: React.FC<PluginResultUIProp> = React.memo((props) =
                             return (
                                 <Statistic
                                     valueStyle={{
-                                        color: idToColor(info.Id),
-                                        textAlign: `${infoIndex >= 1 && 2 === infoIndex + 1 ? "right" : "left"}`
+                                        color: idToColor(info.Id)
                                     }}
                                     key={info.Id}
                                     title={infoList.length > 1 ? info.Id : ""}
@@ -187,6 +186,7 @@ export const PluginResultUI: React.FC<PluginResultUIProp> = React.memo((props) =
                 )
         }
     }
+
     return (
         <div style={{width: "100%", height: "100%", overflow: "hidden auto"}}>
             {/* <div style={{width: "100%", height: "100%", display: "flex", flexDirection: "column", overflow: "auto"}}> */}
