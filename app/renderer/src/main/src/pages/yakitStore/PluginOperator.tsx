@@ -123,7 +123,7 @@ export const PluginOperator: React.FC<YakScriptOperatorProp> = (props) => {
                                           .filter((i) => !!i)
                                           .map((i) => {
                                               return (
-                                                  <Tag
+                                                  <Tag 
                                                       style={{marginLeft: 2, marginRight: 0}}
                                                       key={`${i}`}
                                                       color={"geekblue"}
