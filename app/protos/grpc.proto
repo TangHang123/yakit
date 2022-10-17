@@ -159,6 +159,7 @@ service Yak {
   rpc DeleteHTTPFlows(DeleteHTTPFlowRequest) returns (Empty);
   rpc SetTagForHTTPFlow(SetTagForHTTPFlowRequest) returns (Empty);
   rpc QueryHTTPFlowsIds(QueryHTTPFlowsIdsRequest) returns (QueryHTTPFlowsIdsResponse);
+  rpc HTTPFlowsFieldGroup(HTTPFlowsFieldGroupRequest) returns (HTTPFlowsFieldGroupResponse);
 
   // 从一个 FuzzerRequest 中提取 Url
   rpc ExtractUrl(FuzzerRequest) returns (ExtractedUrl);
@@ -401,6 +402,24 @@ message GenerateExtractRuleResponse {
 
 message GetMachineIDResponse {
   string MachineID = 1;
+}
+
+message QueryHTTPFuzzerResponseByTaskIdRequest {
+  // 用来索引对应的请求
+  int64 TaskId = 1;
+  string FuzzRequestToken = 2;
+
+  // 上一个请求的时间戳
+  int64 LastResponseTimestamp = 3;
+
+  Paging Pagination = 4;
+}
+
+message QueryHTTPFuzzerResponseByTaskIdResponse {
+  Paging Pagination = 1;
+  repeated FuzzerResponse Data = 2;
+  int64 Total = 3;
+  int64 TotalPage = 4;
 }
 
 message QueryHTTPFuzzerResponseByTaskIdRequest {
@@ -1945,6 +1964,9 @@ message QueryHTTPFlowRequest {
 
   repeated string IncludeInWhere = 21;
   repeated int64 IncludeId = 22;
+
+  repeated string Tags = 23;
+  string HaveParamsTotal = 24;
 }
 
 message DeleteHTTPFlowRequest {
@@ -2028,6 +2050,20 @@ message QueryHTTPFlowResponse {
   Paging Pagination = 1;
   repeated HTTPFlow Data = 2;
   int64 Total = 3;
+}
+
+message HTTPFlowsFieldGroupRequest {
+  bool RefreshRequest = 1;
+}
+
+message HTTPFlowsFieldGroupResponse {
+  repeated TagsCode Tags = 1;
+  repeated TagsCode StatusCode = 2;
+}
+
+message TagsCode {
+  string Value = 1;
+  int32 Total = 2;
 }
 
 message WebsocketFlows {
