@@ -1949,6 +1949,8 @@ message QueryHTTPFlowRequest {
   repeated string Tags = 23;
   string HaveParamsTotal = 24;
   repeated string Color = 25;
+  int64 Offset = 26;
+  int64 Limit = 27;
 }
 
 message DeleteHTTPFlowRequest {
