@@ -27,8 +27,8 @@ jobs:
         id: fetchtag_yakit
         with:
           source: ${{ github.ref }}
-          find: 'refs/tags/v'
-          replace: ''
+          find: "refs/tags/v"
+          replace: ""
       # Enterprise
       - name: Extract Version
         id: extract_version
@@ -113,8 +113,8 @@ jobs:
         id: fetchtag_release
         with:
           source: ${{ github.ref }}
-          find: 'refs/tags/v'
-          replace: ''
+          find: "refs/tags/v"
+          replace: ""
       - name: Download Yakit (Darwin Amd64)
         uses: actions/download-artifact@v2
         with:
