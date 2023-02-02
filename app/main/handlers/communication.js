@@ -51,4 +51,9 @@ module.exports = (win, getClient) => {
     ipcMain.handle("open-user-manage", (e, params) => {
         win.webContents.send("callback-open-user-manage", params)
     })
+
+    /** 账户菜单页面的打开通信 */
+    ipcMain.handle("update-yakit-header-title-drop", (e, params) => {
+        win.webContents.send("fetch-yakit-header-title-drop", params)
+    })
 }
