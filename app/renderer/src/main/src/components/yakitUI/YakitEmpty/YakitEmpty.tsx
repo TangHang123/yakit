@@ -45,7 +45,6 @@ export const YakitEmpty: React.FC<YakitEmptyProps> = (props) => {
     return (
         <Empty
             image={<EmptySvgIcon />}
-            description={<div className={styles["yakit-empty"]}>{props.description || "暂无数据"}</div>}
             imageStyle={
                 props.imageStyle
                     ? props.imageStyle
@@ -55,6 +54,14 @@ export const YakitEmpty: React.FC<YakitEmptyProps> = (props) => {
                       }
             }
             {...props}
+            description={
+                !props.descriptionReactNode && (
+                    <div className={styles["yakit-empty"]}>
+                        <div className={styles["yakit-empty-title"]}>{props.title || "暂无数据"}</div>
+                        <div className={styles["yakit-empty-description"]}>{props.description}</div>
+                    </div>
+                )
+            }
         >
             {props.children}
         </Empty>
