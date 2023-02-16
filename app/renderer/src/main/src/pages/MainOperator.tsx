@@ -1396,26 +1396,6 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                                                     tab={i.verbose}
                                                     closeIcon={
                                                         <Space>
-                                                            {/* <Popover
-                                                                trigger={"click"}
-                                                                title={"修改名称"}
-                                                                content={
-                                                                    <>
-                                                                        <Input
-                                                                            size={"small"}
-                                                                            defaultValue={i.verbose}
-                                                                            onBlur={(e) =>
-                                                                                updateCacheVerbose(
-                                                                                    `${i.route}`,
-                                                                                    e.target.value
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    </>
-                                                                }
-                                                            >
-                                                                <EditOutlined className='main-container-cion' />
-                                                            </Popover> */}
                                                             {i.verbose !== "首页" && (
                                                                 <CloseOutlined
                                                                     className='main-container-cion'
@@ -1432,68 +1412,13 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                                                                 : "auto",
                                                             overflowX: "hidden",
                                                             height: "100%",
-                                                            maxHeight: "100%"
+                                                            maxHeight: "100%",
+                                                            padding:
+                                                                !i.singleNode || noPaddingPage.includes(i.route)
+                                                                    ? 0
+                                                                    : "8px 16px 13px 16px"
                                                         }}
                                                     >
-<<<<<<< HEAD
-                                                        <div
-                                                            style={{
-                                                                overflowY: NoScrollRoutes.includes(i.route)
-                                                                    ? "hidden"
-                                                                    : "auto",
-                                                                overflowX: "hidden",
-                                                                height: "100%",
-                                                                maxHeight: "100%",
-                                                                padding:
-                                                                    !i.singleNode || noPaddingPage.includes(i.route)
-                                                                        ? 0
-                                                                        : "8px 16px 13px 16px"
-                                                            }}
-                                                        >
-                                                            {i.singleNode ? (
-                                                                        i.singleNode
-                                                            ) : (
-                                                                <MainTabs
-                                                                    currentTabKey={currentTabKey}
-                                                                    tabType={i.route}
-                                                                    pages={i.multipleNode}
-                                                                    currentKey={i.multipleCurrentKey || ""}
-                                                                    isShowAdd={!i.hideAdd}
-                                                                    setCurrentKey={(key, type) => {
-                                                                        setMultipleCurrentKey(key, type as Route)
-                                                                    }}
-                                                                    removePage={(key, type) => {
-                                                                        removeMultipleNodePage(key, type as Route)
-                                                                    }}
-                                                                    removeOtherPage={(key, type) => {
-                                                                        removeOtherMultipleNodePage(key, type as Route)
-                                                                    }}
-                                                                    onAddTab={() => menuAddPage(i.route)}
-                                                                    updateCacheVerbose={
-                                                                        updateCacheVerboseMultipleNodePage
-                                                                    }
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    </Tabs.TabPane>
-                                                )
-                                            })}
-                                        </Tabs>
-                                    ) : (
-                                        <></>
-                                    )}
-                                    {isShowBaseConsole && (
-                                        <BaseConsole
-                                            setIsShowBaseConsole={setIsShowBaseConsole}
-                                            directionBaseConsole={directionBaseConsole}
-                                        />
-                                    )}
-                                </div>
-                            </Content>
-                        </Layout>
-                    </Content>
-                </div>
-=======
                                                         {i.singleNode ? (
                                                             i.singleNode
                                                         ) : (
@@ -1524,11 +1449,16 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                                 ) : (
                                     <></>
                                 )}
+                                {isShowBaseConsole && (
+                                    <BaseConsole
+                                        setIsShowBaseConsole={setIsShowBaseConsole}
+                                        directionBaseConsole={directionBaseConsole}
+                                    />
+                                )}
                             </div>
                         </Content>
                     </Layout>
                 </Content>
->>>>>>> d858d0ee (删除isNewUi)
             </AutoSpin>
             <Modal
                 visible={bugTestShow}
