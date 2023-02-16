@@ -247,7 +247,7 @@ export const judgeAvatar = (userInfo) => {
     return companyHeadImg && !!companyHeadImg.length ? (
         <Avatar size={24} style={{cursor: "pointer"}} src={companyHeadImg} />
     ) : (
-        <Avatar size={38} style={{backgroundColor: "rgb(245, 106, 0)", cursor: "pointer"}}>
+        <Avatar size={24} style={{backgroundColor: "rgb(245, 106, 0)", cursor: "pointer"}}>
             {companyName && companyName.slice(0, 1)}
         </Avatar>
     )
@@ -1330,9 +1330,12 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                     <CustomizeMenu visible={isShowCustomizeMenu} onClose={() => setIsShowCustomizeMenu(false)} />
                 )}
                 <HeardMenu
-                    routeMenuData={(routeMenuData || []).filter((e) => !e.hidden)}
-                    menuItemGroup={menuItems}
-                    onRouteMenuSelect={menuAddPage}
+                    onRouteMenuSelect={onRouteMenuSelect}
+                    setRouteKeyToLabel={(val) => {
+                        val.forEach((value, key) => {
+                            routeKeyToLabel.current.set(key, value)
+                        })
+                    }}
                 />
                 <Content
                     style={{
@@ -1355,8 +1358,6 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                         >
                             <div
                                 style={{
-                                    padding: 16,
-                                    paddingTop: 8,
                                     overflow: "hidden",
                                     flex: "1",
                                     display: "flex",
@@ -1386,15 +1387,6 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                                                 }
                                             }
                                         }}
-                                        addIcon={
-                                            <Tooltip title='导入协作资源'>
-                                                <ShareImportIcon
-                                                    // @ts-ignore
-                                                    className='share-import-icon'
-                                                    onClick={() => onImportShare()}
-                                                />
-                                            </Tooltip>
-                                        }
                                     >
                                         {pageCache.map((i) => {
                                             return (
@@ -1404,7 +1396,7 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                                                     tab={i.verbose}
                                                     closeIcon={
                                                         <Space>
-                                                            <Popover
+                                                            {/* <Popover
                                                                 trigger={"click"}
                                                                 title={"修改名称"}
                                                                 content={
@@ -1423,7 +1415,7 @@ const Main: React.FC<MainProp> = React.memo((props) => {
                                                                 }
                                                             >
                                                                 <EditOutlined className='main-container-cion' />
-                                                            </Popover>
+                                                            </Popover> */}
                                                             <CloseOutlined
                                                                 className='main-container-cion'
                                                                 onClick={() => removePage(`${i.route}`)}

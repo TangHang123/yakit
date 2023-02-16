@@ -262,7 +262,7 @@ export const FuncDomain: React.FC<FuncDomainProp> = React.memo((props) => {
                 onCancel={() => setUploadModalShow(false)}
                 footer={null}
             >
-                <SelectUpload onCancel={() => setUploadModalShow(false)}/>
+                <SelectUpload onCancel={() => setUploadModalShow(false)} />
             </Modal>
         </div>
     )

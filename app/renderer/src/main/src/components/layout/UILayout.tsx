@@ -40,6 +40,7 @@ import {AllKillEngineConfirm} from "./AllKillEngineConfirm"
 import {SoftwareSettings} from "@/pages/softwareSettings/SoftwareSettings"
 import {HomeSvgIcon} from "@/assets/newIcon"
 
+import TelecomSmallLogo from "@/assets/img/telecom_logo_small.png"
 import classnames from "classnames"
 import styles from "./uiLayout.module.scss"
 import EnterpriseJudgeLogin from "@/pages/EnterpriseJudgeLogin"
@@ -1099,8 +1100,9 @@ const RemoteYaklangEngine: React.FC<RemoteYaklangEngineProps> = React.memo((prop
             <Spin spinning={loading}>
                 <div className={styles["remote-yaklang-engine-body"]}>
                     <div className={styles["remote-title"]}>
-                        <YakitThemeSvgIcon style={{fontSize: 64}}/>
-                        <div className={styles["title-style"]}>远程模式</div>
+                        {/* <YakitThemeSvgIcon style={{fontSize: 64}} /> */}
+                        <img style={{width: 64}} src={TelecomSmallLogo} alt='logo' />
+                        <div className={styles["title-style"]}>Yakit 远程连接模式</div>
                         <div className={styles["remote-history"]}>
                             <div className={styles["select-title"]}>连接历史</div>
                             <Select
