@@ -14,7 +14,7 @@ import cloneDeep from "lodash/cloneDeep"
 import {failed, info, success} from "@/utils/notification"
 import {MenuItemGroup} from "@/pages//MainOperator"
 import {PluginSearchStatisticsRequest, PluginType} from "@/pages/yakitStore/YakitStorePage"
-import { DownloadOnlinePluginByScriptNamesResponse } from "@/pages/layout/HeardMenu/HeardMenuType";
+import {DownloadOnlinePluginByScriptNamesResponse} from "@/pages/layout/HeardMenu/HeardMenuType"
 import {
     MenuComprehensiveCatalogScanningAndBlastingDeepIcon,
     MenuPluginBatchExecutionDeepIcon,
@@ -127,7 +127,7 @@ const RouteItem: React.FC<RouteItemProps> = (props) => {
                             <div className={styles["right-arrow-text"]} onClick={() => addMenu(dataSource.label)}>
                                 获取菜单
                             </div>
-                         )} 
+                        )}
                     </div>
                     <div className={classNames(styles["item-label"], !dataSource.isShow && styles["control-opacity"])}>
                         {dataSource.label}
