@@ -1003,17 +1003,25 @@ export const YakModule: React.FC<YakModuleProp> = (props) => {
     const [refresh, setRefresh] = useState(false)
     const [isSelectAllLocal, setIsSelectAllLocal] = useState<boolean>(false)
     const [selectedRowKeysRecordLocal, setSelectedRowKeysRecordLocal] = useState<YakScript[]>([])
-    const [selectedUploadRowKeysRecordLocal, setSelectedUploadRowKeysRecordLocal, getSelectedUploadRowKeysRecordLocal] =
-        useGetState<YakScript[]>([])
     const [visibleQuery, setVisibleQuery] = useState<boolean>(false)
     const [isFilter, setIsFilter] = useState<boolean>(false)
     const [isShowYAMLPOC, setIsShowYAMLPOC] = useState<boolean>(false)
     const [visibleSyncSelect, setVisibleSyncSelect] = useState<boolean>(false)
     const [upLoading, setUpLoading] = useState<boolean>(false)
+    const [baseUrl, setBaseUrl] = useState<string>("")
     const [userInfoLocal, setUserInfoLocal] = useState<PluginUserInfoLocalProps>({
         UserId: 0,
         HeadImg: ""
     })
+    const SelectedUploadRowKeysRecordLocal = useRef<YakScript[]>([])
+    // 获取私有域
+    useEffect(() => {
+        getRemoteValue("httpSetting").then((setting) => {
+            const values = JSON.parse(setting)
+            const baseUrl: string = values.BaseUrl
+            setBaseUrl(baseUrl)
+        })
+    }, [])
     useEffect(() => {
         if (searchType === "keyword") {
             setQueryLocal({
@@ -1209,7 +1217,7 @@ export const YakModule: React.FC<YakModuleProp> = (props) => {
                         UserId
                     } as QueryYakScriptLocalAndUserRequest)
                     .then((newSrcipt: {Data: YakScript[]}) => {
-                        setSelectedUploadRowKeysRecordLocal(newSrcipt.Data)
+                        SelectedUploadRowKeysRecordLocal.current = newSrcipt.Data
                         JudgeIsShowVisible(newSrcipt.Data)
                     })
                     .catch((e) => {
@@ -1219,7 +1227,7 @@ export const YakModule: React.FC<YakModuleProp> = (props) => {
                     .finally(() => {})
             })
         } else {
-            setSelectedUploadRowKeysRecordLocal(selectedRowKeysRecordLocal)
+            SelectedUploadRowKeysRecordLocal.current = selectedRowKeysRecordLocal
             JudgeIsShowVisible(selectedRowKeysRecordLocal)
         }
     })
@@ -1247,7 +1255,7 @@ export const YakModule: React.FC<YakModuleProp> = (props) => {
 
     const upOnlineBatch = useMemoizedFn(async (type: number) => {
         setUpLoading(true)
-        const realSelectedRowKeysRecordLocal = [...getSelectedUploadRowKeysRecordLocal()]
+        const realSelectedRowKeysRecordLocal = [...SelectedUploadRowKeysRecordLocal.current]
         const length = realSelectedRowKeysRecordLocal.length
         const errList: any[] = []
         for (let index = 0; index < length; index++) {
@@ -1277,7 +1285,10 @@ export const YakModule: React.FC<YakModuleProp> = (props) => {
 
     const upOnline = useMemoizedFn(async (params: YakScript, url: string, type: number) => {
         const onlineParams: API.SaveYakitPlugin = onLocalScriptToOnlinePlugin(params, type)
-        if (params.OnlineId) {
+        if(IsEnterprise&&userInfo.role==="admin"&&params.OnlineBaseUrl===baseUrl){
+            onlineParams.id = parseInt(`${params.OnlineId}`)
+        }
+        if(!IsEnterprise&&params.OnlineId){
             onlineParams.id = parseInt(`${params.OnlineId}`)
         }
         return new Promise((resolve) => {
