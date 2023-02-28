@@ -880,6 +880,7 @@ export const YakitStorePage: React.FC<YakitStorePageProp> = (props) => {
                                             : statisticsDataOnlineOrUser || {}
                                     ).map((item) => {
                                         const queryName = item[0]
+                                        if(queryName==="group") return <></>
                                         const statisticsList = item[1]
                                         const title = queryTitle[queryName]
                                         let current: string | string[] = ""
