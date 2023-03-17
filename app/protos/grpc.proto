@@ -434,7 +434,9 @@ service Yak {
   rpc UpdateCVEDatabase(UpdateCVEDatabaseRequest) returns (stream ExecResult);
   rpc ExportsProfileDatabase(ExportsProfileDatabaseRequest) returns (stream ExecResult);
   rpc ImportsProfileDatabase(ImportsProfileDatabaseRequest) returns (stream ExecResult);
+
   rpc QueryCVE(QueryCVERequest) returns (QueryCVEResponse);
+  rpc SaveTextToTemporalFile(SaveTextToTemporalFileRequest) returns (SaveTextToTemporalFileResponse);
 }
 
 message QueryCVERequest {
@@ -462,7 +464,6 @@ message CVEDetail {
   string ConfidentialityImpact = 10;
   string IntegrityImpact = 11;
   string AvailabilityImpact = 12;
-
   string Severity = 14;
   int64 PublishedAt = 15;
   string CWE = 16;
@@ -480,6 +481,14 @@ message QueryCVEResponse {
   Paging Pagination = 1;
   int64 Total = 2;
   repeated CVEDetail Data = 3;
+}
+
+message SaveTextToTemporalFileRequest {
+  bytes Text = 1;
+}
+
+message SaveTextToTemporalFileResponse {
+  string FileName = 1;
 }
 
 message ImportsProfileDatabaseRequest {

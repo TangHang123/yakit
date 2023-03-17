@@ -379,4 +379,20 @@ module.exports = (win, getClient) => {
     ipcMain.handle("QueryAvailableReportFrom", async (e, params) => {
         return await asyncQueryAvailableReportFrom(params)
     })
+
+    // asyncQueryCVE wrapper
+    const asyncQueryCVE = (params) => {
+        return new Promise((resolve, reject) => {
+            getClient().QueryCVE(params, (err, data) => {
+                if (err) {
+                    reject(err)
+                    return
+                }
+                resolve(data)
+            })
+        })
+    }
+    ipcMain.handle("QueryCVE", async (e, params) => {
+        return await asyncQueryCVE(params)
+    })
 }

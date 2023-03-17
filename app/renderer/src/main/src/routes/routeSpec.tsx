@@ -110,6 +110,7 @@ import {
     MenuSolidBatchVulnerabilityDetectionIcon,
 } from "@/pages/customizeMenu/icon/solidMenuIcon"
 import {ProjectPage} from "@/pages/projects/ProjectPage"
+import {CVEViewer} from "@/pages/cve/CVEViewer";
 
 const HTTPHacker = React.lazy(() => import("../pages/hacker/httpHacker"))
 const CodecPage = React.lazy(() => import("../pages/codec/CodecPage"))
@@ -157,6 +158,7 @@ export enum Route {
     DB_Report = "db-reports-results",
     DB_Risk = "db-risks",
     DB_Projects = "db-projects",
+    DB_CVE = "cve",
 
     // Handler
     DataHandler = "data-handler", // include codec compare
@@ -442,8 +444,8 @@ export const ContentByRoute = (r: Route | string, yakScriptId?: number, params?:
             return <PlugInAdminPage />
         case Route.AttachEngineCombinedOutput:
             return <EngineConsole />
-        // case Route.DB_Projects:
-        //     return <ProjectPage />
+        case Route.DB_CVE:
+            return <CVEViewer/>
         default:
             return <div />
     }
@@ -712,20 +714,13 @@ export const DefaultRouteMenuData: MenuDataProps[] = [
                 icon: <MenuHTTPHistoryIcon />,
                 hoverIcon: <MenuSolidHTTPHistoryIcon />
             },
-            // {
-            //     id: "9-7",
-            //     key: Route.AttachEngineCombinedOutput,
-            //     label: "引擎 Console",
-            //     icon: <MenuDefaultPluginIcon />,
-            //     hoverIcon: <MenuSolidDefaultPluginIcon />
-            // },
-            // {
-            //     id: "9-8",
-            //     key: Route.DB_Projects,
-            //     label: "项目管理(Beta*)",
-            //     icon: <MenuDefaultPluginIcon />,
-            //     hoverIcon: <MenuSolidDefaultPluginIcon />
-            // }
+            {
+                id: "9-8",
+                key: Route.DB_CVE,
+                label: "CVE 查询",
+                icon: <MenuHTTPHistoryIcon />,
+                hoverIcon: <MenuSolidHTTPHistoryIcon />
+            },
         ]
     },
 ]
