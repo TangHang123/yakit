@@ -539,6 +539,7 @@ message UpdateCVEDatabaseRequest {
 message IsCVEDatabaseReadyResponse {
   bool Ok = 1;
   string Reason = 2;
+  bool ShouldUpdate = 3;
 }
 
 message IsCVEDatabaseReadyRequest {
