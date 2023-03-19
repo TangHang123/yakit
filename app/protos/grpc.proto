@@ -436,7 +436,12 @@ service Yak {
   rpc ImportsProfileDatabase(ImportsProfileDatabaseRequest) returns (stream ExecResult);
 
   rpc QueryCVE(QueryCVERequest) returns (QueryCVEResponse);
+  rpc GetCVE(GetCVERequest) returns (CVEDetailEx);
   rpc SaveTextToTemporalFile(SaveTextToTemporalFileRequest) returns (SaveTextToTemporalFileResponse);
+}
+
+message GetCVERequest {
+  string CVE = 1;
 }
 
 message QueryCVERequest {
@@ -450,6 +455,33 @@ message QueryCVERequest {
   string Severity = 6;
   double Score = 7;
   string Product = 8;
+
+  // by published_date
+  string AfterYear = 9;
+  bool ChineseTranslationFirst = 10;
+}
+
+message CWEDetail {
+  string CWE = 1;
+  string Name = 2;
+  string NameZh = 3;
+//  repeated CWEDetail InterTo = 4;
+
+  string Status = 5;
+  bool Stable = 6;
+  bool Incomplete = 7;
+  string Description = 8;
+  string DescriptionZh = 9;
+  string LongDescription = 10;
+  string LongDescriptionZh = 11;
+  repeated string RelativeLanguage = 12;
+  string Solution = 13;
+  repeated string RelativeCVE = 14;
+}
+
+message CVEDetailEx {
+  CVEDetail CVE = 1;
+  repeated CWEDetail CWE= 2;
 }
 
 message CVEDetail {
@@ -475,6 +507,7 @@ message CVEDetail {
   bool ObtainUserPrivileged = 22;
   bool ObtainOtherPrivileged = 23;
   bool UserInteractionRequired = 24;
+  string Product = 25;
 }
 
 message QueryCVEResponse {
