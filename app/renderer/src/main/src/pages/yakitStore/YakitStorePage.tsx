@@ -79,7 +79,6 @@ import {
     SelectIcon,
     OnlineCloudIcon,
     ImportIcon,
-    ShareIcon,
     RecycleIcon
 } from "../../assets/icons"
 import {findDOMNode} from "react-dom"
@@ -95,7 +94,7 @@ import {ENTERPRISE_STATUS, getJuageEnvFile} from "@/utils/envfile"
 import {fullscreen} from "@uiw/react-md-editor"
 import {getRemoteValue, setRemoteValue} from "@/utils/kv"
 import {ItemSelects} from "@/components/baseTemplate/FormItemUtil"
-import {ChevronDownIcon} from "@/assets/newIcon"
+import {ChevronDownIcon, ShareIcon} from "@/assets/newIcon"
 import style from "@/components/HTTPFlowTable/HTTPFlowTable.module.scss"
 import {OutputPluginForm} from "./PluginOperator"
 import {YakFilterRemoteObj} from "../mitm/MITMServerHijacking/MITMPluginLocalList"
