@@ -403,7 +403,6 @@ export const HTTPFuzzerPageTable: React.FC<HTTPFuzzerPageTableProps> = React.mem
         }
     ).run
     const onRowClick = useMemoizedFn((val) => {
-        console.log("val", val)
         setCurrentSelectItem(val)
         setFirstFull(false)
     })
@@ -437,8 +436,8 @@ export const HTTPFuzzerPageTable: React.FC<HTTPFuzzerPageTableProps> = React.mem
                         enableDrag={true}
                         columns={columns}
                         onChange={onTableChange}
-                        containerClassName={classNames(styles["table-container"],{
-                            [styles["table-container-border"]]:currentSelectItem?.ResponseRaw
+                        containerClassName={classNames(styles["table-container"], {
+                            [styles["table-container-border"]]: currentSelectItem?.ResponseRaw
                         })}
                         onRowClick={onRowClick}
                         currentSelectItem={currentSelectItem}
