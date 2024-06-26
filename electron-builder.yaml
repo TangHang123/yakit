@@ -1,8 +1,6 @@
-appId: 'io.yaklang.yakit'
-productName: 'Yakit'
+appId: "io.yaklang.yakit"
+productName: "Yakit"
 copyright: Copyright © 2024 yaklang.io
-
-
 
 extraFiles:
   - from: "bins/scripts/auto-install-cert.zip"
@@ -45,30 +43,30 @@ mac:
   extraFiles:
     - from: "bins/flag.darwin.txt"
       to: "bins/flag.darwin.txt"
-    - from: "bins/yak_darwin_amd64.zip"
+    - from: bins/yak_darwin_${arch}.zip
       to: "bins/yak.zip"
     - from: "report/template.zip"
       to: "report/template.zip"
   target:
     - target: dmg
       arch:
-        - x64
+        - amd64
         - arm64
   icon: "app/assets/yakitlogo.icns"
 
 linux:
-  artifactName: ${productName}-${version}-linux-amd64.${ext}
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
   extraFiles:
     - from: "bins/flag.linux.txt"
       to: "bins/flag.linux.txt"
-    - from: "bins/yak_linux_amd64.zip"
+    - from: bins/yak_linux_${arch}.zip
       to: "bins/yak.zip"
     - from: "report/template.zip"
       to: "report/template.zip"
   target:
     - target: AppImage
       arch:
-        - x64
+        - amd64
         - arm64
   icon: "app/assets/yakitlogo.icns"
 
@@ -88,14 +86,13 @@ win:
         - x64
   icon: "app/assets/yakitlogo.ico"
 
-
 nsis:
-  oneClick: false 
+  oneClick: false
   perMachine: false
   deleteAppDataOnUninstall: true
-  allowToChangeInstallationDirectory: true 
-  installerIcon: app/assets/yakitlogo.ico 
-  uninstallerIcon: app/assets/yakitlogo.ico 
+  allowToChangeInstallationDirectory: true
+  installerIcon: app/assets/yakitlogo.ico
+  uninstallerIcon: app/assets/yakitlogo.ico
   unicode: true
   include: build/yakit_build.nsh
   license: LICENSE.md
