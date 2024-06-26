@@ -195,7 +195,7 @@ jobs:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
           path: ./release/EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
-      - name: Upload Yakit(Enterprise) Artifacts Linux
+      - name: Upload Yakit(Enterprise) Artifacts Linux(arm64)
         uses: actions/upload-artifact@v2
         if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-ee') }}
         with:
