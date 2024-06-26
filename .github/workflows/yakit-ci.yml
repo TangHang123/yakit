@@ -195,7 +195,13 @@ jobs:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
           path: ./release/EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
-
+      - name: Upload Yakit(Enterprise) Artifacts Linux
+        uses: actions/upload-artifact@v2
+        if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-ee') }}
+        with:
+            # Yakit-1.0.3-beta24-win32-x64.exe
+            name: EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
+            path: ./release/EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
       # start Special Edition
       - name: Upload Yakit(Special) Artifacts Windows
         uses: actions/upload-artifact@v2
@@ -225,6 +231,13 @@ jobs:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
           path: ./release/EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
+      - name: Upload Yakit(Special) Artifacts Linux(arm64)
+        uses: actions/upload-artifact@v2
+        if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-se') }}
+        with:
+          # Yakit-1.0.3-beta24-win32-x64.exe
+          name: EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
+          path: ./release/EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
 
   publish_yakit_ee_to_oss:
     if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-ee') && !endsWith(github.ref, '/no-release') }}
@@ -262,6 +275,10 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
+      - name: Download Yakit (Linux arm64)
+        uses: actions/download-artifact@v2
+        with:
+          name: EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
       - run: ls
         name: Ls Published Artifacts...
 
@@ -281,6 +298,7 @@ jobs:
             Yakit-${{ steps.extract_version.outputs.version }}-darwin-x64.dmg:/yak/${{ steps.extract_version.outputs.version }}/EnpriTrace-${{ steps.extract_version.outputs.version }}-darwin-x64.dmg
             Yakit-${{ steps.extract_version.outputs.version }}-darwin-arm64.dmg:/yak/${{ steps.extract_version.outputs.version }}/EnpriTrace-${{ steps.extract_version.outputs.version }}-darwin-arm64.dmg
             Yakit-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage:/yak/${{ steps.extract_version.outputs.version }}/EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
+            Yakit-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage:/yak/${{ steps.extract_version.outputs.version }}/EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
   # special edition
   publish_yakit_se_to_oss:
     if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-se') && !endsWith(github.ref, '/no-release') }}
