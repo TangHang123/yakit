@@ -55,9 +55,9 @@ mac:
   icon: "app/assets/yakitlogo.icns"
 
 linux:
-  if: ${{ arch===x64 }}
+  arch: x64
     artifactName: ${productName}-${version}-linux-amd64.${ext}
-  if: ${{ arch===arm64 }}
+  arch: arm64
     artifactName: ${productName}-${version}-linux-arm64.${ext}
   extraFiles:
     - from: "bins/flag.linux.txt"
