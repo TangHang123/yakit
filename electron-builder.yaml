@@ -59,7 +59,7 @@ linux:
   extraFiles:
     - from: "bins/flag.linux.txt"
       to: "bins/flag.linux.txt"
-    - from: bins/yak_linux_${arch}.zip
+    - from: bins/yak_linux_arm64.zip
       to: "bins/yak.zip"
     - from: "report/template.zip"
       to: "report/template.zip"
