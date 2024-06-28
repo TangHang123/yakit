@@ -85,6 +85,22 @@ win:
         - x64
   icon: "app/assets/yakitlogo.ico"
 
+# 判断架构类型
+if:
+  arch: x64
+  linux:
+    # 根据架构生成包名
+    target:
+      - target: AppImage
+        arch: x64
+        artifactName: ${productName}_${version}_amd64.${ext}
+  else:
+    # 另一种架构的处理方式
+    target:
+      - target: AppImage
+        arch: arm64
+        artifactName: ${productName}_${version}_arm64.${ext}
+
 nsis:
   oneClick: false
   perMachine: false
