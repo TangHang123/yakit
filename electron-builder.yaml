@@ -59,7 +59,7 @@ linux:
   extraFiles:
     - from: "bins/flag.linux.txt"
       to: "bins/flag.linux.txt"
-    - from: bins/yak_linux_arm64.zip
+    - from: bins/yak_linux_${arch}.zip
       to: "bins/yak.zip"
     - from: "report/template.zip"
       to: "report/template.zip"
@@ -67,7 +67,6 @@ linux:
     - target: AppImage
       arch:
         - x64
-        - arm64
   icon: "app/assets/yakitlogo.icns"
 
 win:
