@@ -69,6 +69,8 @@ linux:
         - x64
         - arm64
   icon: "app/assets/yakitlogo.icns"
+  publish: 
+    - github
 
 win:
   artifactName: ${productName}-${version}-windows-amd64.${ext}
