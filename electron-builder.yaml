@@ -101,8 +101,7 @@ nsis:
   createDesktopShortcut: false
   createStartMenuShortcut: true
   
-hooks: 
-  beforePack: "beforePack/linux_before_pack.js"
+beforePack: "beforePack/linux_before_pack.js"
 #publish:
 #  - provider: generic
 #    url: https://update.electron-builder.com
