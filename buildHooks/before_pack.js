@@ -78,4 +78,5 @@ module.exports = async function (context) {
         console.log('macConfig', macConfig.artifactName, macConfig.extraFiles)
         context.packager.config.mac = { ...macConfig }
     }
+    console.log('context.packager.config', context.packager.config)
 };
