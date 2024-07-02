@@ -15,10 +15,6 @@ module.exports = async function (context) {
                 "from": "bins/flag.linux.txt",
                 "to": "bins/flag.linux.txt",
             },
-            // {
-            //     "from": "report/template.zip",
-            //     "to": "report/template.zip",
-            // },
         ]
         switch (arch) {
             case 'x64':
@@ -56,10 +52,6 @@ module.exports = async function (context) {
                 "from": "bins/flag.darwin.txt",
                 "to": "bins/flag.darwin.txt",
             },
-            // {
-            //     "from": "report/template.zip",
-            //     "to": "report/template.zip",
-            // },
         ]
         switch (arch) {
             case 'x64':
@@ -83,6 +75,7 @@ module.exports = async function (context) {
             default:
                 break;
         }
+        console.log('macConfig', macConfig.artifactName, macConfig.extraFiles)
         context.packager.config.mac = { ...macConfig }
     }
 };
