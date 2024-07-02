@@ -57,7 +57,7 @@ mac:
   icon: "app/assets/yakitlogo.icns"
 
 linux:
-  # artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
   # extraFiles:
   #   - from: "bins/flag.linux.txt"
   #     to: "bins/flag.linux.txt"
@@ -102,6 +102,7 @@ nsis:
   createStartMenuShortcut: true
 
 beforePack: "buildHooks/before_pack.js"
+afterPack: "buildHooks/after_pack.js"
 #publish:
 #  - provider: generic
 #    url: https://update.electron-builder.com
