@@ -1,18 +1,16 @@
 module.exports = async function (context) {
     const archMap = {
         1: 'x64',
-        2: 'ia32',
-        3: 'armv7l',
-        4: 'arm64',
-        5: 'mips64el'
+        3: 'arm64',
     };
     const arch = archMap[context.arch];
-    console.log('arch', context.arch,arch)
+    console.log('arch', context.arch, arch)
     console.log('electronPlatformName', context.electronPlatformName)
     console.log('config', context.packager.config)
     console.log('context', context)
     /**linux */
-    const linuxConfig = context.packager.config.linux;
+    /** 1:x64 3:arm64 */
+    const linuxConfig = context.electronPlatformName === 'linux' ? context.packager.config.linux : null;
     if (linuxConfig) {
         switch (arch) {
             case 'x64':
@@ -41,7 +39,8 @@ module.exports = async function (context) {
         context.packager.config.linux = { ...linuxConfig }
     }
     /**mac */
-    const macConfig = context.packager.config.mac;
+    /** 1:x64 3:arm64 */
+    const macConfig = context.electronPlatformName === 'darwin' ? context.packager.config.mac : null;
     if (macConfig) {
         switch (arch) {
             case 'x64':
