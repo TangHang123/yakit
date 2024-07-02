@@ -6,8 +6,6 @@ module.exports = async function (context) {
     const arch = archMap[context.arch];
     console.log('arch', context.arch, arch)
     console.log('electronPlatformName', context.electronPlatformName)
-    console.log('config', context.packager.config)
-    console.log('context', context)
     /**linux */
     /** 1:x64 3:arm64 */
     const linuxConfig = context.electronPlatformName === 'linux' ? context.packager.config.linux : null;
@@ -36,6 +34,7 @@ module.exports = async function (context) {
             default:
                 break;
         }
+        console.log('linuxConfig',linuxConfig.artifactName,linuxConfig.extraFiles)
         context.packager.config.linux = { ...linuxConfig }
     }
     /**mac */
