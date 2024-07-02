@@ -1,6 +1,9 @@
 module.exports = async function (context) {
     const arch = context.arch;
-
+    console.log('arch',context.arch)
+    console.log('electronPlatformName',context.electronPlatformName)
+    console.log('config',context.packager.config)
+    console.log('context',context)
     /**linux */
     const linuxConfig = context.electronPlatformName === 'linux' ? context.packager.config.linux : null;
     if (linuxConfig) {
