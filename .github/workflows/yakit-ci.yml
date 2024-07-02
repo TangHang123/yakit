@@ -112,6 +112,18 @@ jobs:
         working-directory: ./
         run: |
           yarn add -D dmg-license && yarn electron-publish
+      - name: Rename package files
+        run: |
+          output_dir=release
+          if [ ${{ matrix.arch }} == "x86_64" ]; then
+            new_arch="amd64"
+          else
+            new_arch="${{ matrix.arch }}"
+          fi
+          for file in $output_dir/*; do
+            new_file=$(echo $file | sed "s/x86_64/$new_arch/")
+            mv $file $new_file
+          done
       - name: View Published Content
         run: ls ./release
         #        Yakit-1.0.9-darwin-arm64.dmg
@@ -157,7 +169,7 @@ jobs:
         with:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: Yakit-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
-          path: ./release/Yakit-${{ steps.extract_version.outputs.version }}-linux-x86_64.AppImage
+          path: ./release/Yakit-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
 
       - name: Upload Yakit(Community) Artifacts Linux(arm64)
         uses: actions/upload-artifact@v2
@@ -194,7 +206,7 @@ jobs:
         with:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
-          path: ./release/EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-x86_64.AppImage
+          path: ./release/EnpriTrace-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
       - name: Upload Yakit(Enterprise) Artifacts Linux(arm64)
         uses: actions/upload-artifact@v2
         if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-ee') }}
@@ -230,7 +242,7 @@ jobs:
         with:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
-          path: ./release/EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-x86_64.AppImage
+          path: ./release/EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
       - name: Upload Yakit(Special) Artifacts Linux(arm64)
         uses: actions/upload-artifact@v2
         if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-se') }}
