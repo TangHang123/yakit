@@ -43,8 +43,8 @@ mac:
   extraFiles:
     - from: "bins/flag.darwin.txt"
       to: "bins/flag.darwin.txt"
-    - from: bins/yak_darwin_${arch}.zip
-      to: "bins/yak.zip"
+    # - from: bins/yak_darwin_${arch}.zip
+    #   to: "bins/yak.zip"
     - from: "report/template.zip"
       to: "report/template.zip"
   target:

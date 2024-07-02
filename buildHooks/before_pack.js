@@ -38,7 +38,6 @@ module.exports = async function (context) {
     if (macConfig) {
         switch (arch) {
             case 'x64':
-                macConfig.artifactName = '${productName}-${version}-darwin-amd64.${ext}';
                 macConfig.extraFiles = [
                     ...macConfig.extraFiles,
                     {
@@ -48,7 +47,6 @@ module.exports = async function (context) {
                 ]
                 break;
             case 'arm64':
-                macConfig.artifactName = '${productName}-${version}-darwin-arm64.${ext}';
                 macConfig.extraFiles = [
                     ...macConfig.extraFiles,
                     {
@@ -61,35 +59,5 @@ module.exports = async function (context) {
                 break;
         }
         context.packager.config.mac = { ...macConfig }
-    }
-    /**win */
-    const winConfig = context.packager.config.win;
-    if (winConfig) {
-        console.log('arch', arch)
-        switch (arch) {
-            case 'x64':
-                winConfig.artifactName = '${productName}-${version}-windows-amd64.${ext}';
-                winConfig.extraFiles = [
-                    ...winConfig.extraFiles,
-                    {
-                        "from": "bins/yak_windows_amd64.zip",
-                        "to": "bins/yak.zip",
-                    },
-                ]
-                break;
-            case 'arm64':
-                winConfig.artifactName = '${productName}-${version}-windows-arm64.${ext}';
-                winConfig.extraFiles = [
-                    ...winConfig.extraFiles,
-                    {
-                        "from": "bins/yak_windows_arm64.zip",
-                        "to": "bins/yak.zip",
-                    },
-                ]
-                break;
-            default:
-                break;
-        }
-        context.packager.config.win = { ...macConfig }
     }
 };
