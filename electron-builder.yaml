@@ -54,12 +54,47 @@ mac:
         - arm64
   icon: "app/assets/yakitlogo.icns"
 
+# linux:
+#   # artifactName: ${productName}-${version}-linux-${arch}.${ext}
+#   extraFiles:
+#     - from: "bins/flag.linux.txt"
+#       to: "bins/flag.linux.txt"
+#     - from: bins/yak_linux_${arch}.zip
+#       to: "bins/yak.zip"
+#     - from: "report/template.zip"
+#       to: "report/template.zip"
+#   target:
+#     - target: AppImage
+#       arch:
+#         - x64
+#       artifactName: ${productName}-${version}-linux-amd64.${ext}
+#     - target: AppImage
+#       arch:
+#         - arm64
+#       artifactName: ${productName}-${version}-linux-arm64.${ext}
+#   icon: "app/assets/yakitlogo.icns"
+
 linux:
-  # artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  artifactName: ${productName}-${version}-linux-arm64.${ext}
   extraFiles:
     - from: "bins/flag.linux.txt"
       to: "bins/flag.linux.txt"
-    - from: bins/yak_linux_${arch}.zip
+    - from: bins/yak_linux_arm64.zip
+      to: "bins/yak.zip"
+    - from: "report/template.zip"
+      to: "report/template.zip"
+  target:
+    - target: AppImage
+      arch:
+        - arm64
+  icon: "app/assets/yakitlogo.icns"
+
+linux64:
+  artifactName: ${productName}-${version}-linux-amd64.${ext}
+  extraFiles:
+    - from: "bins/flag.linux.txt"
+      to: "bins/flag.linux.txt"
+    - from: bins/yak_linux_amd64.zip
       to: "bins/yak.zip"
     - from: "report/template.zip"
       to: "report/template.zip"
@@ -67,11 +102,6 @@ linux:
     - target: AppImage
       arch:
         - x64
-      artifactName: ${productName}-${version}-linux-amd64.${ext}
-    - target: AppImage
-      arch:
-        - arm64
-      artifactName: ${productName}-${version}-linux-arm64.${ext}
   icon: "app/assets/yakitlogo.icns"
 
 win:
