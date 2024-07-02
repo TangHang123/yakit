@@ -68,7 +68,6 @@ linux:
       arch:
         - x64
         - arm64
-      artifactName: ${productName}-${version}-linux-amd64.${ext}
   icon: "app/assets/yakitlogo.icns"
   beforePack: "beforePack/linux_before_pack.js"
 
