@@ -55,12 +55,12 @@ mac:
   icon: "app/assets/yakitlogo.icns"
 
 linux:
-  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  # artifactName: ${productName}-${version}-linux-${arch}.${ext}
   extraFiles:
     - from: "bins/flag.linux.txt"
       to: "bins/flag.linux.txt"
-    - from: bins/yak_linux_${arch}.zip
-      to: "bins/yak.zip"
+    # - from: bins/yak_linux_${arch}.zip
+    #   to: "bins/yak.zip"
     - from: "report/template.zip"
       to: "report/template.zip"
   target:
