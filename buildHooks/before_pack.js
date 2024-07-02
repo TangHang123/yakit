@@ -1,11 +1,11 @@
 module.exports = async function (context) {
     const arch = context.arch;
-    console.log('arch',context.arch)
-    console.log('electronPlatformName',context.electronPlatformName)
-    console.log('config',context.packager.config)
-    console.log('context',context)
+    console.log('arch', context.arch)
+    console.log('electronPlatformName', context.electronPlatformName)
+    console.log('config', context.packager.config)
+    console.log('context', context)
     /**linux */
-    const linuxConfig = context.electronPlatformName === 'linux' ? context.packager.config.linux : null;
+    const linuxConfig = context.packager.config.linux;
     if (linuxConfig) {
         switch (arch) {
             case 'x64':
@@ -31,10 +31,10 @@ module.exports = async function (context) {
             default:
                 break;
         }
-        context.packager.config.linux={...linuxConfig}
+        context.packager.config.linux = { ...linuxConfig }
     }
     /**mac */
-    const macConfig = context.electronPlatformName === 'mac' ? context.packager.config.mac : null;
+    const macConfig = context.packager.config.mac;
     if (macConfig) {
         switch (arch) {
             case 'x64':
@@ -60,12 +60,12 @@ module.exports = async function (context) {
             default:
                 break;
         }
-        context.packager.config.mac={...macConfig}
+        context.packager.config.mac = { ...macConfig }
     }
     /**win */
-    const winConfig = context.electronPlatformName === 'win' ? context.packager.config.win : null;
+    const winConfig = context.packager.config.win;
     if (winConfig) {
-        console.log('arch',arch)
+        console.log('arch', arch)
         switch (arch) {
             case 'x64':
                 winConfig.artifactName = '${productName}-${version}-windows-amd64.${ext}';
@@ -90,6 +90,6 @@ module.exports = async function (context) {
             default:
                 break;
         }
-        context.packager.config.mac={...macConfig}
+        context.packager.config.win = { ...macConfig }
     }
 };
