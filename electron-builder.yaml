@@ -55,7 +55,7 @@ mac:
   icon: "app/assets/yakitlogo.icns"
 
 linux:
-  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  # artifactName: ${productName}-${version}-linux-${arch}.${ext}
   extraFiles:
     - from: "bins/flag.linux.txt"
       to: "bins/flag.linux.txt"
@@ -67,7 +67,11 @@ linux:
     - target: AppImage
       arch:
         - x64
+      artifactName: ${productName}-${version}-linux-amd.${ext}.
+    - target: AppImage
+      arch:
         - arm64
+      artifactName: ${productName}-${version}-linux-arm64.${ext}
   icon: "app/assets/yakitlogo.icns"
 
 win:
