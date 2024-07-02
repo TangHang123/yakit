@@ -25,6 +25,8 @@ extraFiles:
       - "!*.db"
   - from: "LICENSE.md"
     to: "LICENSE.md"
+  - from: "report/template.zip"
+    to: "report/template.zip"
 
 directories:
   buildResources: resources
@@ -40,13 +42,13 @@ publish:
 
 mac:
   artifactName: ${productName}-${version}-darwin-${arch}.${ext}
-  extraFiles:
-    - from: "bins/flag.darwin.txt"
-      to: "bins/flag.darwin.txt"
-    # - from: bins/yak_darwin_${arch}.zip
-    #   to: "bins/yak.zip"
-    - from: "report/template.zip"
-      to: "report/template.zip"
+  # extraFiles:
+  #   - from: "bins/flag.darwin.txt"
+  #     to: "bins/flag.darwin.txt"
+  #   - from: bins/yak_darwin_${arch}.zip
+  #     to: "bins/yak.zip"
+  #   - from: "report/template.zip"
+  #     to: "report/template.zip"
   target:
     - target: dmg
       arch:
@@ -55,14 +57,14 @@ mac:
   icon: "app/assets/yakitlogo.icns"
 
 linux:
-  # artifactName: ${productName}-${version}-linux-${arch}.${ext}
-  extraFiles:
-    - from: "bins/flag.linux.txt"
-      to: "bins/flag.linux.txt"
-    # - from: bins/yak_linux_${arch}.zip
-    #   to: "bins/yak.zip"
-    - from: "report/template.zip"
-      to: "report/template.zip"
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  # extraFiles:
+  #   - from: "bins/flag.linux.txt"
+  #     to: "bins/flag.linux.txt"
+  #   - from: bins/yak_linux_${arch}.zip
+  #     to: "bins/yak.zip"
+  #   - from: "report/template.zip"
+  #     to: "report/template.zip"
   target:
     - target: AppImage
       arch:
@@ -77,8 +79,6 @@ win:
       to: "bins/flag.windows.txt"
     - from: "bins/yak_windows_amd64.zip"
       to: "bins/yak.zip"
-    - from: "report/template.zip"
-      to: "report/template.zip"
   # requestedExecutionLevel: requireAdministrator
   target:
     - target: nsis
