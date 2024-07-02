@@ -112,18 +112,6 @@ jobs:
         working-directory: ./
         run: |
           yarn add -D dmg-license && yarn electron-publish
-      - name: Rename package files
-        run: |
-          output_dir=release
-          if [ ${{ matrix.arch }} == "x86_64" ]; then
-            new_arch="amd64"
-          else
-            new_arch="${{ matrix.arch }}"
-          fi
-          for file in $output_dir/*; do
-            new_file=$(echo $file | sed "s/x86_64/$new_arch/")
-            mv $file $new_file
-          done
       - name: View Published Content
         run: ls ./release
         #        Yakit-1.0.9-darwin-arm64.dmg
