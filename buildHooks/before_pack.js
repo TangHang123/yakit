@@ -6,10 +6,12 @@ module.exports = async function (context) {
     const arch = archMap[context.arch];
     console.log('arch', context.arch, arch)
     console.log('electronPlatformName', context.electronPlatformName)
+
     /**linux */
     /** 1:x64 3:arm64 */
     const linuxConfig = context.electronPlatformName === 'linux' ? context.packager.config.linux : null;
     if (linuxConfig) {
+        console.log('context.packager.config.linux',context.packager.config.linux)
         const linuxExtraFiles = [
             {
                 "from": "bins/flag.linux.txt",
