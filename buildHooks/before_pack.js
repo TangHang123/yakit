@@ -1,6 +1,13 @@
 module.exports = async function (context) {
-    const arch = context.arch;
-    console.log('arch', context.arch)
+    const archMap = {
+        1: 'x64',
+        2: 'ia32',
+        3: 'armv7l',
+        4: 'arm64',
+        5: 'mips64el'
+    };
+    const arch = archMap[context.arch];
+    console.log('arch', context.arch,arch)
     console.log('electronPlatformName', context.electronPlatformName)
     console.log('config', context.packager.config)
     console.log('context', context)
