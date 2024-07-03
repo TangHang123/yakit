@@ -19,16 +19,6 @@ module.exports = async function (context) {
             },
         ]
         switch (arch) {
-            case 'x64':
-                linuxConfig.artifactName = '${productName}-${version}-linux-x64.${ext}';
-                linuxConfig.extraFiles = [
-                    ...linuxExtraFiles,
-                    {
-                        "from": "bins/yak_linux_amd64.zip",
-                        "to": "bins/yak.zip",
-                    },
-                ]
-                break;
             case 'arm64':
                 linuxConfig.artifactName = '${productName}-${version}-linux-arm64.${ext}';
                 linuxConfig.extraFiles = [
@@ -39,6 +29,17 @@ module.exports = async function (context) {
                     },
                 ]
                 break;
+            case 'x64':
+                linuxConfig.artifactName = '${productName}-${version}-linux-amd64.${ext}';
+                linuxConfig.extraFiles = [
+                    ...linuxExtraFiles,
+                    {
+                        "from": "bins/yak_linux_amd64.zip",
+                        "to": "bins/yak.zip",
+                    },
+                ]
+                break;
+            
             default:
                 break;
         }
