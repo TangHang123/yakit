@@ -20,7 +20,7 @@ module.exports = async function (context) {
         ]
         switch (arch) {
             case 'x64':
-                linuxConfig.artifactName = '${productName}-${version}-linux-amd64.${ext}';
+                linuxConfig.artifactName = '${productName}-${version}-linux-x64.${ext}';
                 linuxConfig.extraFiles = [
                     ...linuxExtraFiles,
                     {
@@ -80,5 +80,4 @@ module.exports = async function (context) {
         console.log('macConfig', macConfig.artifactName, macConfig.extraFiles)
         context.packager.config.mac = { ...macConfig }
     }
-    console.log('context.packager.config', context.packager.config)
 };
