@@ -16,16 +16,6 @@ module.exports = async function (context) {
             },
         ]
         switch (arch) {
-            case 'arm64':
-                linuxConfig.artifactName = '${productName}-${version}-linux-arm64.${ext}';
-                linuxConfig.extraFiles = [
-                    ...linuxExtraFiles,
-                    {
-                        "from": "bins/yak_linux_arm64.zip",
-                        "to": "bins/yak.zip",
-                    },
-                ]
-                break;
             case 'x64':
                 linuxConfig.artifactName = '${productName}-${version}-linux-amd64.${ext}';
                 linuxConfig.extraFiles = [
@@ -36,6 +26,17 @@ module.exports = async function (context) {
                     },
                 ]
                 break;
+            case 'arm64':
+                linuxConfig.artifactName = '${productName}-${version}-linux-arm64.${ext}';
+                linuxConfig.extraFiles = [
+                    ...linuxExtraFiles,
+                    {
+                        "from": "bins/yak_linux_arm64.zip",
+                        "to": "bins/yak.zip",
+                    },
+                ]
+                break;
+            
             
             default:
                 break;
@@ -53,15 +54,6 @@ module.exports = async function (context) {
             },
         ]
         switch (arch) {
-            case 'arm64':
-                macConfig.extraFiles = [
-                    ...darwinExtraFiles,
-                    {
-                        "from": "bins/yak_darwin_arm64.zip",
-                        "to": "bins/yak.zip",
-                    },
-                ]
-                break;
             case 'x64':
                 macConfig.extraFiles = [
                     ...darwinExtraFiles,
@@ -71,6 +63,16 @@ module.exports = async function (context) {
                     },
                 ]
                 break;
+            case 'arm64':
+                macConfig.extraFiles = [
+                    ...darwinExtraFiles,
+                    {
+                        "from": "bins/yak_darwin_arm64.zip",
+                        "to": "bins/yak.zip",
+                    },
+                ]
+                break;
+            
             
             default:
                 break;
