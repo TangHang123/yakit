@@ -41,6 +41,8 @@ module.exports = async function (context) {
             default:
                 break;
         }
+        console.log('linuxConfig',JSON.stringify(linuxConfig))
+        console.log('linuxConfig-------',JSON.stringify({...linuxConfig}))
         context.packager.config.linux = linuxConfig
     }
     /**mac */
