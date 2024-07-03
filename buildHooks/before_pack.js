@@ -44,7 +44,7 @@ module.exports = async function (context) {
                 break;
         }
         console.log('linuxConfig', linuxConfig.artifactName, linuxConfig.extraFiles)
-        context.packager.config.linux = { ...linuxConfig }
+        context.packager.config.linux = linuxConfig
     }
     /**mac */
     /** 1:x64 3:arm64 */
@@ -80,6 +80,6 @@ module.exports = async function (context) {
                 break;
         }
         console.log('macConfig', macConfig.artifactName, macConfig.extraFiles)
-        context.packager.config.mac = { ...macConfig }
+        context.packager.config.mac = macConfig
     }
 };
