@@ -5,6 +5,7 @@ on:
     branches:
       - "ci/*"
     tags:
+      - "t*"
       - "v*"
 
 jobs:
@@ -16,7 +17,7 @@ jobs:
     #          - macos-latest
     #          - ubuntu-latest
     runs-on: macos-13
-    if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-') || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+    if: ${{ startsWith(github.ref, 'refs/heads/ci/yakit-') || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') ||startsWith(github.ref, 'refs/tags/t')}}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -116,14 +117,14 @@ jobs:
           yarn add -D dmg-license && yarn electron-publish-se
       # 社区版
       - run: yarn build-render
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-')||startsWith(github.ref, 'refs/tags/t') }}
         working-directory: ./
         name: "Build Community"
         env:
           CI: ""
           NODE_OPTIONS: --max_old_space_size=4096
       - name: Build Yakit (MultiPlatform)
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-')||startsWith(github.ref, 'refs/tags/t') }}
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         working-directory: ./
@@ -149,28 +150,28 @@ jobs:
       # 社区版
       - name: Upload Yakit(Community) Artifacts Windows
         uses: actions/upload-artifact@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-')||startsWith(github.ref, 'refs/tags/t') }}
         with:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: Yakit-${{ steps.extract_version.outputs.version }}-windows-amd64.exe
           path: ./release/Yakit-${{ steps.extract_version.outputs.version }}-windows-amd64.exe
       - name: Upload Yakit(Community) Artifacts Mac(m1)
         uses: actions/upload-artifact@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-')||startsWith(github.ref, 'refs/tags/t') }}
         with:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: Yakit-${{ steps.extract_version.outputs.version }}-darwin-arm64.dmg
           path: ./release/Yakit-${{ steps.extract_version.outputs.version }}-darwin-arm64.dmg
       - name: Upload Yakit(Community) Artifacts Mac(intel)
         uses: actions/upload-artifact@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-')||startsWith(github.ref, 'refs/tags/t') }}
         with:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: Yakit-${{ steps.extract_version.outputs.version }}-darwin-x64.dmg
           path: ./release/Yakit-${{ steps.extract_version.outputs.version }}-darwin-x64.dmg
       - name: Upload Yakit(Community) Artifacts Linux(amd64)
         uses: actions/upload-artifact@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-')||startsWith(github.ref, 'refs/tags/t') }}
         with:
           # Yakit-1.0.3-beta24-win32-x64.exe
           name: Yakit-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
@@ -178,7 +179,7 @@ jobs:
 
       - name: Upload Yakit(Community) Artifacts Linux(arm64)
         uses: actions/upload-artifact@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/ci/community-') ||startsWith(github.ref, 'refs/tags/t')}}
         with:
           name: Yakit-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
           path: ./release/Yakit-${{ steps.extract_version.outputs.version }}-linux-arm64.AppImage
@@ -373,7 +374,7 @@ jobs:
             Yakit-${{ steps.extract_version.outputs.version }}-darwin-arm64.dmg:/yak/${{ steps.extract_version.outputs.version }}/EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-darwin-arm64.dmg
             Yakit-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage:/yak/${{ steps.extract_version.outputs.version }}/EnpriTraceAgent-${{ steps.extract_version.outputs.version }}-linux-amd64.AppImage
   download_artifacts_and_release:
-    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ startsWith(github.ref, 'refs/tags/v') ||startsWith(github.ref, 'refs/tags/t')}}
     needs:
       #      - build_and_release
       - build_yakit
@@ -515,7 +516,7 @@ jobs:
             Yakit-${{ steps.fetchtag_release.outputs.value }}-darwin-arm64.dmg:/yak/${{ steps.fetchtag_release.outputs.value }}/Yakit-${{ steps.fetchtag_release.outputs.value }}-darwin-arm64.dmg
             Yakit-${{ steps.fetchtag_release.outputs.value }}-linux-amd64.AppImage:/yak/${{ steps.fetchtag_release.outputs.value }}/Yakit-${{ steps.fetchtag_release.outputs.value }}-linux-amd64.AppImage
             Yakit-${{ steps.fetchtag_release.outputs.value }}-linux-arm64.AppImage:/yak/${{ steps.fetchtag_release.outputs.value }}/Yakit-${{ steps.fetchtag_release.outputs.value }}-linux-arm64.AppImage
-      
+
       # - name: Update OSS latest file
       #   run: echo ${{ steps.fetchtag_release.outputs.value }} > ./yakit-version.txt
       # - name: Upload Yakit Version to oss
