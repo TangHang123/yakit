@@ -55,6 +55,23 @@ jobs:
         uses: Saionaro/extract-package-version@v1.1.1
       - name: Echo Yakit Package Version
         run: echo ${{ steps.extract_version.outputs.version }}
+      # Cache node_modules main
+      - name: Cache node_modules for main process
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-main-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-main-
+      # Cache node_modules renderer
+      - name: Cache node_modules for renderer process
+        uses: actions/cache@v2
+        with:
+          path: app/renderer/src/main/node_modules
+          key: ${{ runner.os }}-node-renderer-${{ hashFiles('app/renderer/src/main/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-renderer-
+
       - run: yarn install && yarn install-render
         working-directory: ./
         name: "Install Dependencies"
