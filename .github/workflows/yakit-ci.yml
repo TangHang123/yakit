@@ -65,8 +65,6 @@ jobs:
           key: ${{ runner.os }}-node-main-${{ hashFiles('package.json') }}
           restore-keys: |
             ${{ runner.os }}-node-main-
-      - name: Debug cache-renderer outputs
-        run: echo ${{ steps.cache-main.outputs.cache-hit }}
       # Cache node_modules renderer
       - name: Cache node_modules for renderer process
         id: cache-renderer
@@ -76,9 +74,6 @@ jobs:
           key: ${{ runner.os }}-node-renderer-${{ hashFiles('app/renderer/src/main/package.json') }}
           restore-keys: |
             ${{ runner.os }}-node-renderer-
-      - name: Debug cache-renderer outputs
-        run: 
-          echo ${{ steps.cache-renderer.outputs.cache-hit }}
       - name: Install dependencies for main process
         if: steps.cache-main.outputs.cache-hit != 'true'
         working-directory: ./
